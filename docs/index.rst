@@ -18,3 +18,11 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+Glossary
+========
+
+.. glossary::
+
+   SISO
+      Single-Input Single-Output; systems that only have one input channel and one output channel.

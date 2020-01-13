@@ -17,6 +17,26 @@ class StateSpace:
         \dot{x} &= a x + b u, \\
         y &= c x + d u.
 
+    where the state vectors are,
+
+    .. math::
+
+        x \in \mathbb{C}^{n\times 1},\
+        u \in \mathbb{C}^{m\times 1},\
+        y \in \mathbb{C}^{l\times 1},
+
+    and, the "system matrices" are
+
+    .. math::
+
+        a \in \mathbb{C}^{n\times n},\
+        b \in \mathbb{C}^{n\times m},\
+        c \in \mathbb{C}^{l\times n},\
+        d \in \mathbb{C}^{l\times m}.
+
+    For `SISO` quantum systems :math:`m = l = 2` (usually the operator and its conjugate operator,
+    e.g. :math:`u = (\hat{u}, \hat{u}^\dagger)^T`).
+
     Attributes:
          - a:     Internal dynamics
          - b:     Input coupling
