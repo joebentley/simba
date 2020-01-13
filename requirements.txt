@@ -1,0 +1,8 @@
+numpy=1.17.4
+scipy=1.3.1
+sympy=1.5
+ply==3.11
+pyx==0.15
+qutip==4.4.1
+qnet==1.4.3
+six
