@@ -48,12 +48,20 @@ class StateSpace:
         self.c = c
         self.d = d
 
-        # check dimensions
+        # check matrix dimensions
         if not a.is_square:
-            raise DimensionError("a matrix is not square")
-        n = a.shape[0]
-        # m =
-        # if not b.shape[0] == num_dof
+            raise DimensionError(f"`a` matrix is not square: {a.shape}")
+        na = a.shape[0]
+        (nb, mb) = b.shape
+        (lc, nc) = c.shape
+        (ld, md) = d.shape
+        if not mb == md:
+            raise DimensionError(f"Number of input channels for matrix b not equal to matrix d: {mb} != {md}")
+        if not nb == na or not nc == na:
+            raise DimensionError(f"Number of degrees of freedom in matrices do not match: "
+                                 f"a - {na}, b - {nb}, c - {nc}")
+        if not lc == ld:
+            raise DimensionError(f"Number of output channels for matrix c not equal to matrix d: {lc} != {ld}")
 
     @classmethod
     def from_transfer_function_coeffs(cls, numer, denom):

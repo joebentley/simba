@@ -6,3 +6,4 @@ pyx==0.15
 qutip==4.4.1
 qnet==1.4.3
 six
+pytest
