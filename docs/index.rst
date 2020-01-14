@@ -3,8 +3,11 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to qsynth's documentation!
-==================================
+qsynth - Systematic Synthesis of Linear Quantum Systems
+=======================================================
+
+Welcome to the documentation for qsynth, a set of python scripts and modules for enabling the systematic synthesis
+of linear quantum dynamical systems including noise ports.
 
 .. toctree::
    :maxdepth: 2

@@ -13,14 +13,12 @@ class StateSpace:
     Represents a dynamical state-space which describes the time-domain evolution of a system.
 
     .. math::
-
         \dot{x} &= a x + b u, \\
         y &= c x + d u.
 
     where the state vectors are,
 
     .. math::
-
         x \in \mathbb{C}^{n\times 1},\
         u \in \mathbb{C}^{m\times 1},\
         y \in \mathbb{C}^{l\times 1},
@@ -28,11 +26,12 @@ class StateSpace:
     and, the "system matrices" are
 
     .. math::
-
         a \in \mathbb{C}^{n\times n},\
         b \in \mathbb{C}^{n\times m},\
         c \in \mathbb{C}^{l\times n},\
         d \in \mathbb{C}^{l\times m}.
+
+    If the dimensions do not match up, raises `DimensionError`.
 
     For `SISO` quantum systems :math:`m = l = 2` (usually the operator and its conjugate operator,
     e.g. :math:`u = (\hat{u}, \hat{u}^\dagger)^T`).
@@ -50,7 +49,11 @@ class StateSpace:
         self.d = d
 
         # check dimensions
-
+        if not a.is_square:
+            raise DimensionError("a matrix is not square")
+        n = a.shape[0]
+        # m =
+        # if not b.shape[0] == num_dof
 
     @classmethod
     def from_transfer_function_coeffs(cls, numer, denom):
