@@ -1,9 +1,9 @@
 
-simba - Systematic Synthesis of Linear Quantum Systems
+SImBA - Systematic Inference of Bosonic quAntum systems
 =======================================================
 
-Welcome to the documentation for simba, a set of python scripts and modules for enabling the systematic synthesis
-of linear quantum dynamical systems including noise ports.
+Welcome to the documentation for simba, a set of python scripts and modules for the systematic synthesis
+of linear quantum dynamical systems directly from frequency-domain transfer functions.
 
 .. toctree::
    :maxdepth: 2

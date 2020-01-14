@@ -2,5 +2,5 @@
 Core features
 =============
 
-.. automodule:: qsynth.core
+.. automodule:: simba.core
    :members:

@@ -17,7 +17,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'qsynth'
+project = 'simba'
 copyright = '2020, Joe Bentley'
 author = 'Joe Bentley'
 

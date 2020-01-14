@@ -72,6 +72,6 @@ class StateSpace:
 
 def transfer_func_coeffs_to_state_space(numer, denom):
     """
-    See `qsynth.core.StateSpace.from_transfer_function_coeffs`
+    See `simba.core.StateSpace.from_transfer_function_coeffs`
     """
     return StateSpace.from_transfer_function_coeffs(numer, denom)
