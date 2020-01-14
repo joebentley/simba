@@ -1,9 +1,9 @@
-=============
-Core features
-=============
+==========================
+``core.py``: Core features
+==========================
 
 .. automodule:: simba.core
-   :members:
+    :members:
 
 .. rubric:: Footnotes
 
@@ -23,5 +23,5 @@ Core features
         \begin{bmatrix}x \\ x^\#\end{bmatrix}
         + \begin{bmatrix}d & 0 \\ 0 & d^\#\end{bmatrix} \begin{bmatrix}u \\ u^\#\end{bmatrix},
 
-    where for a matrix :math:`m^{\vphantom{\#}}`, :math:`m^\#` means "take the adjoint of each element". Effectively
-    each element is "doubled-up", as discussed in [squeezing-components]_.
+    where for a matrix :math:`m`, the notation :math:`m^\#` means "take the adjoint of each element". Effectively
+    each vector is in `doubled-up form`, as discussed in [squeezing-components]_.

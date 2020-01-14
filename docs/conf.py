@@ -64,3 +64,17 @@ imgmath_font_size = 14
 
 # set the default role
 default_role = 'any'
+
+
+# make sure that we don't skip documenting these special cases
+do_not_skip = ["__eq__"]
+
+
+def skip(app, what, name, obj, would_skip, options):
+    if name in do_not_skip:
+        return False
+    return would_skip
+
+
+def setup(app):
+    app.connect("autodoc-skip-member", skip)
