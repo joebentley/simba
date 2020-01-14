@@ -1,4 +1,4 @@
-name: qsynth
+name: simba
 channels:
   - defaults
 dependencies:
@@ -52,5 +52,4 @@ dependencies:
     - pyx==0.15
     - qnet==1.4.3
     - qutip==4.4.1
-prefix: /Users/jbentley/anaconda3/envs/qsynth
 
