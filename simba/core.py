@@ -3,9 +3,14 @@ from sympy import Matrix
 
 class DimensionError(Exception):
     """
-    Represents an error involving matrix dimensions
+    Represents an error involving matrix dimensions.
     """
-    pass
+
+
+class CoefficientError(Exception):
+    """
+    Represents an error involving transfer function coefficients.
+    """
 
 
 class StateSpace:
@@ -65,16 +70,30 @@ class StateSpace:
 
     @classmethod
     def from_transfer_function_coeffs(cls, numer, denom):
-        """
-        Return the controllable canonical form state space for the given list of numerators and denominators.
+        r"""
+        Return the *quantum* (see [#quantum]_) controllable canonical form state space for the given list of numerators
+        and denominators of a pole-zero form transfer function, assuming complex ladder operators :math:`(a, a^\dagger)`
+        are used.
+
+        The coefficients are defined via the transfer function between the input :math:`u(s)` and
+        the output:math:`y(s)`, where :math:`s` is the complex Laplace frequency,
+
+        .. math::
+            \frac{y(s)}{u(s)} = \frac{b_0 s^n + b_1 s^{n-1} + \dots + b_{n-1} s + b_n}
+            {s^n + a_1 s^{n-1} + \dots + a_{n-1} s + a_n}.
+
+        *Note that we assume the coefficients are normalized with respect to the highest order term in the denominator.*
+
+        Raises `CoefficientError` if lengths of coefficient lists are wrong.
 
         Reference: https://www.engr.mun.ca/~millan/Eng6825/canonicals.pdf
 
-        :param numer: list of
-        :param denom: hello
+        :param numer: The numerator coefficients: :math:`[b_0, \dots, b_n]`
+        :param denom: The denominator coefficients: :math:`[a_1, \dots, a_n]`
 
-        :return: the thing
+        :return: StateSpace for the given system
         """
+
         pass
 
 
