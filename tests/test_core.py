@@ -51,10 +51,7 @@ def test_should_error_if_transfer_function_coeffs_lists_are_wrong_length():
 
 
 def test_unstable_filter_to_state_space():
-    transfer_func_coeffs_to_state_space([-2, 1], [2]).pprint()
     tf = transfer_func_coeffs_to_state_space([-2, 1], [2]).to_transfer_function()
-    print()
-    pprint(simplify(tf))
     s = symbols('s')
     assert simplify(tf) == (s - 2) / (s + 2)
 
