@@ -1,4 +1,4 @@
-from .errors import DimensionError
+from simba.errors import DimensionError
 
 
 def halve_matrix(mat):

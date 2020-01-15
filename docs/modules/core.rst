@@ -25,3 +25,16 @@
 
     where for a matrix :math:`m`, the notation :math:`m^\#` means "take the adjoint of each element". Effectively
     each vector is in `doubled-up form`, as discussed in [squeezing-components]_.
+
+.. [#laplace]
+    Our convention for the Laplace transform is the following,
+
+    .. math::
+        f(s) = \int_{-\infty}^{\infty} e^{st} f(t) \mathrm{d}t,
+
+    where :math:`s` is the complex frequency.
+
+    The Laplace transform of the n-th time derivative (assuming all derivatives vanish at infinity) is given by,
+
+    .. math::
+        \mathcal{L}\left\{\frac{\mathrm{d}f}{\mathrm{d}t}\right\} = (-1)^n s^n f(s).

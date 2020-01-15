@@ -1,6 +1,6 @@
 import pytest
 from simba.errors import DimensionError
-from simba.utils import *
+from simba.utils import halve_matrix
 from sympy.matrices import Matrix
 
 
