@@ -1,4 +1,8 @@
 
-# qsynth
+# SImBA - Systematic Inference of Bosonic quAntum systems
 
-Hello world
+## TODO
+
+* Upload documentation to `readthedocs.org`
+* Example notebooks
+* Paper
