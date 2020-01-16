@@ -4,6 +4,17 @@ from simba import *
 from sympy import Matrix, I, pprint, simplify, symbols
 
 
+def test_extracting_coeffs_from_transfer_function():
+    s = symbols('s')
+    expr = (2 * s + 8) / (2 * s ** 2 + 4 * s + 2)
+    coeffs = transfer_function_to_coeffs(expr)
+    assert coeffs.numer == [4, 1, 0]
+    assert coeffs.denom == [1, 2]
+
+    with pytest.raises(NotImplementedError):
+        transfer_function_to_coeffs(1 / expr)
+
+
 def example_statespace():
     a = Matrix([[1, 2], [3, 4]])
     b = Matrix([5, 6])
@@ -51,9 +62,10 @@ def test_should_error_if_transfer_function_coeffs_lists_are_wrong_length():
 
 
 def test_unstable_filter_to_state_space():
-    tf = transfer_func_coeffs_to_state_space([-2, 1], [2]).to_transfer_function()
     s = symbols('s')
-    assert simplify(tf) == (s - 2) / (s + 2)
+    tf_expected = (s - 2) / (s + 2)
+    tf_result = transfer_function_to_state_space(tf_expected).to_transfer_function()
+    assert simplify(tf_result) == tf_expected
 
 
 def test_state_space_to_transfer_function_throws_expected_errors():

@@ -1,7 +1,48 @@
 from copy import deepcopy
-from sympy import Matrix, BlockDiagMatrix, Symbol, pprint
+from collections import namedtuple
+from sympy import Matrix, BlockDiagMatrix, Symbol, pprint, fraction
 from simba.utils import halve_matrix
 from simba.errors import DimensionError, CoefficientError, StateSpaceError
+
+
+def transfer_function_to_coeffs(expr):
+    """
+    Extract transfer function coefficients from the given expression which is a function of frequency :math:`s` and a
+    ratio of two polynomials.
+
+    Returns a namedtuple containing two lists of length n and n-1 for the numerator and denominator respectively
+    in *order of ascending powers*, where n is the order of expr in :math:`s`.
+
+    The numerator list will be padded if the denominator is higher order than the numerator.
+
+    A ``NotImplementedError`` will be raised if the denominator is lower order than the numerator.
+
+    The coefficients are normalised such that the coefficient of the highest order term in the denominator is one.
+
+    :param expr: ratio of two polynomials in :math:`s`
+    :return: ``Coefficients`` namedtuple with fields: ``(numer=[b_n, ..., b_0], denom=[a_n, ..., a_1])``
+    """
+    s = Symbol('s')
+    numers_and_denoms = tuple(map(lambda e: list(reversed(e.as_poly(s).all_coeffs())), fraction(expr)))
+    numer_coeffs, denom_coeffs = numers_and_denoms
+
+    if len(numer_coeffs) > len(denom_coeffs):
+        raise NotImplementedError("TODO: currently denominator can't be lower order than numerator")
+
+    # normalize w.r.t. highest order coeff in denominator
+    highest_order_denom = denom_coeffs[-1]
+
+    numer_coeffs, denom_coeffs = map(lambda coeffs: [n / highest_order_denom for n in coeffs], numers_and_denoms)
+
+    # pad numer_coeffs with zeros at end until length of denom_coeffs
+    numer_coeffs.extend([0] * (len(denom_coeffs) - len(numer_coeffs)))
+
+    assert denom_coeffs[-1] == 1, "sanity check on normalisation failed"
+    denom_coeffs = denom_coeffs[:-1]  # drop last element of denoms
+    assert len(denom_coeffs) == len(numer_coeffs) - 1, "sanity check on lengths failed"
+
+    Coefficients = namedtuple('Coefficients', ['numer', 'denom'])
+    return Coefficients(numer=numer_coeffs, denom=denom_coeffs)
 
 
 class StateSpace:
@@ -114,6 +155,12 @@ class StateSpace:
 
         return cls(a, b, c, d)
 
+    @classmethod
+    def from_transfer_function(cls, expr):
+        """Call `from_transfer_function_coeffs` passing the expression to `transfer_function_to_coeffs`."""
+        return cls.from_transfer_function_coeffs(*transfer_function_to_coeffs(expr))
+
+
     def extended_to_quantum(self):
         """
         Extend to quantum state space to doubled-up ordering (see [#quantum]_).
@@ -202,5 +249,10 @@ class StateSpace:
 
 
 def transfer_func_coeffs_to_state_space(numer, denom):
-    """See `simba.core.StateSpace.from_transfer_function_coeffs`."""
+    """See `StateSpace.from_transfer_function_coeffs`."""
     return StateSpace.from_transfer_function_coeffs(numer, denom)
+
+
+def transfer_function_to_state_space(expr):
+    """See `StateSpace.from_transfer_function`."""
+    return StateSpace.from_transfer_function(expr)
