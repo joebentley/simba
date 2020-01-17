@@ -27,6 +27,14 @@ $ pip install -e .
 $ py.test
 ```
 
+To build documentation locally,
+
+```
+$ pwd
+... (simba code directory containing setup.py)
+$ ./make_docs.sh
+```
+
 ## TODO
 
 * Example notebooks

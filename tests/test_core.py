@@ -1,7 +1,12 @@
 
 import pytest
 from simba import *
+from simba.core import j_matrix
 from sympy import Matrix, I, pprint, simplify, symbols
+
+
+def test_j_matrix():
+    assert j_matrix(4) == Matrix.diag(1, -1, 1, -1)
 
 
 def test_extracting_coeffs_from_transfer_function():

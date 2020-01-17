@@ -44,7 +44,11 @@ Glossary
     Doubled-up form
         Where the state-space vectors are ordered such that all the creation operators for the modes follow the
         annihilation operators: :math:`(a_1, \dots, a_n; a_1^\dagger, \dots, a_n^\dagger)^T`, as opposed to a
-        paired form: :math:`(a_1, a_1^\dagger; \dots; a_n, a_n^\dagger)^T`.
+        `paired operator form`: :math:`(a_1, a_1^\dagger; \dots; a_n, a_n^\dagger)^T`.
+
+    Paired operator form
+        Where each pair of operators corresponds to the same mode, in the form
+        :math:`(a_1, a_1^\dagger; \dots; a_n, a_n^\dagger)^T`, in contrast to `doubled-up form`.
 
 References
 ==========

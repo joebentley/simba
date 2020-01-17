@@ -6,6 +6,20 @@ from simba.errors import DimensionError, CoefficientError, StateSpaceError
 from functools import lru_cache
 
 
+def j_matrix(num_dof):
+    r"""
+    Return quantum :math:`J` matrix for a `paired operator form` `StateSpace` with given ``num_dof``,
+
+    .. math::
+        J = \text{diag}(1, -1;\dots;1, -1) \in \mathbb{R}^{2n\times 2n}.
+
+    Raises ``ValueError`` if num_dof is not even.
+    """
+    if num_dof % 2 != 0:
+        raise ValueError("num_dof should be even for a quantum system")
+    return Matrix.diag([1, -1] * (num_dof // 2))
+
+
 def transfer_function_to_coeffs(expr):
     """
     Extract transfer function coefficients from the given expression which is a function of frequency :math:`s` and a
@@ -54,7 +68,8 @@ class StateSpace:
         \dot{x} &= a x + b u, \\
         y &= c x + d u.
 
-    where the state vectors are bounded linear operators usually in `doubled-up form`,
+    where the state vectors are bounded linear operators usually in `doubled-up form`, (use `reorder_to_paired_form`
+    to convert to `paired operator form`)
 
     .. math::
         x \in \mathbb{L}^{n\times 1},\
@@ -81,7 +96,7 @@ class StateSpace:
          - d:     Direct-feed (input to output)
          - is_quantum:  whether or not system is quantum.
 
-    Note that the matrices are stored using ``sympy.ImmutableMatrix``, and so are immutable. New `StateSpace`s should
+    Note that the matrices are stored using ``sympy.ImmutableMatrix``, and so are immutable. New StateSpaces should
     be created from modified matrices instead.
     """
     def __init__(self, a, b, c, d):
@@ -231,7 +246,7 @@ class StateSpace:
         .. math::
             (a_1, a_2, \dots, a_n; a_1^\dagger, a_2^\dagger, \dots, a_n^\dagger)^T,
 
-        to paired operator form,
+        to `paired operator form`,
 
         .. math::
             (a_1, a_1^\dagger; a_2, a_2^\dagger; \dots; a_n, a_n^\dagger)^T,
