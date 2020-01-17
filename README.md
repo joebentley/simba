@@ -1,7 +1,9 @@
 
 # SImBA - Systematic Inference of Bosonic quAntum systems
 
-See `notebooks` for examples
+[>>Documentation<<](https://simbapy.readthedocs.io/en/latest/)
+
+See `notebooks` for examples.
 
 To clone the dev environment run,
 
@@ -16,11 +18,12 @@ To install simba for development purposes,
 $ pwd
 ... (simba code directory containing setup.py)
 $ pip install -e .
+(then to run test suite)
+$ py.test
 ```
 
 ## TODO
 
-* Upload documentation to `readthedocs.org`
 * Example notebooks
 * Write paper
 * Upload to PyPI (& Conda?)
