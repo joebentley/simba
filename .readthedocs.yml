@@ -1,5 +1,2 @@
-python:
-   version: 3.7
-   install:
-      - requirements: cython-requirements.txt
-      - requirements: requirements.txt
+conda:
+  environment: environment.yml
