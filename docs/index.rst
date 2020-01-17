@@ -2,6 +2,17 @@
 SImBA - Systematic Inference of Bosonic quAntum systems
 =======================================================
 
+|github link| |CI status| |License: MIT| |Documentation Status|
+
+.. |github link| image:: https://img.shields.io/badge/github-joebentley%2Fsimba-brightgreen
+   :target: https://github.com/joebentley/simba
+.. |CI status| image:: https://github.com/joebentley/simba/workflows/Python%20application/badge.svg
+   :target: https://github.com/joebentley/simba/actions
+.. |License: MIT| image:: https://img.shields.io/badge/License-MIT-yellow.svg
+   :target: https://opensource.org/licenses/MIT
+.. |Documentation Status| image:: https://readthedocs.org/projects/pip/badge/?version=stable
+   :target: http://pip.pypa.io/en/stable/?badge=stable
+
 Welcome to the documentation for simba, a set of python scripts and modules for the systematic synthesis
 of linear quantum dynamical systems directly from frequency-domain transfer functions.
 
