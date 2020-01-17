@@ -1,0 +1,16 @@
+name: simba
+channels:
+  - defaults
+dependencies:
+  - python=3.7
+  - pip
+  - cython
+  - numpy
+  - scipy
+  - sympy
+  - pip:
+    - ply==3.11
+    - pyx==0.15
+    - qutip==4.4.1
+    - qnet==1.4.3
+    - six
