@@ -2,12 +2,12 @@ name: simba
 channels:
   - defaults
 dependencies:
-  - python=3.7
+  - python
 #  - pip
 #  - cython
-  - numpy
-  - scipy
-  - sympy
+#  - numpy
+#  - scipy
+#  - sympy
 #  - pip:
 #    - ply==3.11
 #    - pyx==0.15
