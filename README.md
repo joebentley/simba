@@ -4,7 +4,7 @@
 [![](https://img.shields.io/badge/github-joebentley%2Fsimba-brightgreen)](https://github.com/joebentley/simba)
 [![](https://github.com/joebentley/simba/workflows/Python%20application/badge.svg)](https://github.com/joebentley/simba/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Documentation Status](https://readthedocs.org/projects/pip/badge/?version=stable)](http://pip.pypa.io/en/stable/?badge=stable)
+[![Documentation Status](https://readthedocs.org/projects/simbapy/badge/?version=latest)](https://simbapy.readthedocs.io/en/latest/?badge=latest)
 
 [>>Documentation<<](https://simbapy.readthedocs.io/en/latest/)
 
