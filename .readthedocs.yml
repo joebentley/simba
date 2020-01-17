@@ -5,8 +5,8 @@ sphinx:
 
 formats: all
 
-#conda:
-#  environment: readthedocs-environment.yml
+conda:
+  environment: readthedocs-environment.yml
 
 python:
   system_packages: true
