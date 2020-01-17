@@ -90,3 +90,16 @@ def test_extending_to_quantum_state_space():
 def test_truncating_to_classical_state_space():
     ss = StateSpace(Matrix([1 + I]), Matrix([2]), Matrix([3]), Matrix([4]))
     assert ss.extended_to_quantum().truncated_to_classical() == ss
+
+
+def test_reordering_to_paired_form():
+    a = Matrix([[1, 2], [3, 4]])
+    b = Matrix([[5, 6], [7, 8]])
+    c = Matrix([[9, 1], [2, 3]])
+    d = Matrix([[4, 5], [6, 7]])
+    a, b, c, d = StateSpace(a, b, c, d).extended_to_quantum().reorder_to_paired_form()
+
+    assert a == Matrix([[1, 0, 2, 0], [0, 1, 0, 2], [3, 0, 4, 0], [0, 3, 0, 4]])
+    assert b == Matrix([[5, 0, 6, 0], [0, 5, 0, 6], [7, 0, 8, 0], [0, 7, 0, 8]])
+    assert c == Matrix([[9, 0, 1, 0], [0, 9, 0, 1], [2, 0, 3, 0], [0, 2, 0, 3]])
+    assert d == Matrix([[4, 0, 5, 0], [0, 4, 0, 5], [6, 0, 7, 0], [0, 6, 0, 7]])

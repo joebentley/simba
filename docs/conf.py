@@ -67,7 +67,7 @@ default_role = 'any'
 
 
 # make sure that we don't skip documenting these special cases
-do_not_skip = ["__eq__"]
+do_not_skip = ["__eq__", "__iter__", "__str__"]
 
 
 def skip(app, what, name, obj, would_skip, options):

@@ -1,8 +1,9 @@
 from copy import deepcopy
 from collections import namedtuple
-from sympy import Matrix, BlockDiagMatrix, Symbol, fraction
+from sympy import Matrix, BlockDiagMatrix, Symbol, fraction, ImmutableMatrix
 from simba.utils import halve_matrix
 from simba.errors import DimensionError, CoefficientError, StateSpaceError
+from functools import lru_cache
 
 
 def transfer_function_to_coeffs(expr):
@@ -78,12 +79,16 @@ class StateSpace:
          - b:     Input coupling
          - c:     Internal coupling to output
          - d:     Direct-feed (input to output)
+         - is_quantum:  whether or not system is quantum.
+
+    Note that the matrices are stored using ``sympy.ImmutableMatrix``, and so are immutable. New `StateSpace`s should
+    be created from modified matrices instead.
     """
     def __init__(self, a, b, c, d):
-        self.a = a
-        self.b = b
-        self.c = c
-        self.d = d
+        self.a = ImmutableMatrix(a)
+        self.b = ImmutableMatrix(b)
+        self.c = ImmutableMatrix(c)
+        self.d = ImmutableMatrix(d)
 
         # check matrix dimensions
         if not a.is_square:
@@ -173,10 +178,10 @@ class StateSpace:
         quantum_ss = deepcopy(self)
 
         quantum_ss.is_quantum = True
-        quantum_ss.a = Matrix(BlockDiagMatrix(self.a, self.a.C))
-        quantum_ss.b = Matrix(BlockDiagMatrix(self.b, self.b.C))
-        quantum_ss.c = Matrix(BlockDiagMatrix(self.c, self.c.C))
-        quantum_ss.d = Matrix(BlockDiagMatrix(self.d, self.d.C))
+        quantum_ss.a = ImmutableMatrix(BlockDiagMatrix(self.a, self.a.C))
+        quantum_ss.b = ImmutableMatrix(BlockDiagMatrix(self.b, self.b.C))
+        quantum_ss.c = ImmutableMatrix(BlockDiagMatrix(self.c, self.c.C))
+        quantum_ss.d = ImmutableMatrix(BlockDiagMatrix(self.d, self.d.C))
         return quantum_ss
 
     def truncated_to_classical(self):
@@ -217,32 +222,74 @@ class StateSpace:
             s = Symbol('s')
             return (self.c * (-s * Matrix.eye(self.a.shape[0]) - self.a).inv() * self.b + self.d)[0, 0]
 
-    def __eq__(self, other):
-        """Equality for state spaces means that all the ABCD matrices are equal and both are or aren't quantum."""
-        return self.a == other.a and self.b == other.b and self.c == other.c and self.d == other.d and \
-            self.is_quantum == other.is_quantum
+    @lru_cache()
+    def reorder_to_paired_form(self):
+        r"""
+        Return a new StateSpace with the system matrices reordered so that the state vectors, inputs, and outputs are
+        converted from doubled-up form,
 
-    def pprint(self):
-        """Pretty print the system matrices for debug or interactive programming purposes."""
-        print(self)
+        .. math::
+            (a_1, a_2, \dots, a_n; a_1^\dagger, a_2^\dagger, \dots, a_n^\dagger)^T,
+
+        to paired operator form,
+
+        .. math::
+            (a_1, a_1^\dagger; a_2, a_2^\dagger; \dots; a_n, a_n^\dagger)^T,
+
+        Raise `StateSpaceError` if not quantum.
+
+        Result with be cached using ``functools.lru_cache``, so subsequent calls should be "free".
+
+        :return: StateSpace in paired up form.
+        """
+        if not self.is_quantum:
+            raise StateSpaceError("StateSpace must be quantum.")
+        # (1, 2, 3, 11, 22, 33) -> (1, 11, 2, 22, 3, 33)
+        n = self.num_degrees_of_freedom
+        assert n % 2 == 0, "num_degrees_of_freedom should be even for a quantum system"
+
+        # construct the transformation matrix that reorders the elements
+        u = Matrix.zeros(n, n)
+        for x in range(n // 2):
+            u[x * 2, x] = 1
+            u[x * 2 + 1, x + n // 2] = 1
+
+        # apply transformation and return
+        return StateSpace(u*self.a*u.inv(), u*self.b*u.inv(), u*self.c*u.inv(), u*self.d*u.inv())
 
     @property
     def num_degrees_of_freedom(self):
+        """Returns num degrees of freedom if classical, or 2 * num degrees of freedom if quantum."""
         return self.a.shape[0]
 
     @property
     def num_inputs(self):
+        """Returns num inputs if classical, or 2 * num inputs if quantum."""
         return self.b.shape[1]
 
     @property
     def num_outputs(self):
+        """Returns num outputs if classical, or 2 * num outputs if quantum."""
         return self.c.shape[0]
+
+    def pprint(self):
+        """Pretty print the system matrices for debug or interactive programming purposes."""
+        print(self)
 
     def _repr_latex_(self):
         """Display `StateSpace` in Jupyter notebook as LaTeX."""
         from sympy.printing.latex import latex
         lb = r"\\" if self.num_degrees_of_freedom > 4 else r",\,"  # only break lines if matrices are large
         return f"$$\\displaystyle A={latex(self.a)}{lb}B={latex(self.b)}{lb}C={latex(self.c)}{lb}D={latex(self.d)}$$"
+
+    def __iter__(self):
+        """Returns iterator holding tuple with the four system matrices. Use for unpacking."""
+        return iter((self.a, self.b, self.c, self.d))
+
+    def __eq__(self, other):
+        """Equality for state spaces means that all the ABCD matrices are equal and both are or aren't quantum."""
+        return self.a == other.a and self.b == other.b and self.c == other.c and self.d == other.d and \
+            self.is_quantum == other.is_quantum
 
     def __str__(self):
         """Prettify the equation."""
@@ -251,6 +298,9 @@ class StateSpace:
 
     def __repr__(self):
         return f"{repr(self.a)}\n{repr(self.b)}\n{repr(self.c)}\n{repr(self.d)}\n"
+
+    def __hash__(self):
+        return hash(tuple(self))
 
 
 def transfer_func_coeffs_to_state_space(numer, denom):
