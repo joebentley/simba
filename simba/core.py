@@ -1,6 +1,6 @@
 from copy import deepcopy
 from collections import namedtuple
-from sympy import Matrix, BlockDiagMatrix, Symbol, pprint, fraction
+from sympy import Matrix, BlockDiagMatrix, Symbol, fraction
 from simba.utils import halve_matrix
 from simba.errors import DimensionError, CoefficientError, StateSpaceError
 
@@ -160,7 +160,6 @@ class StateSpace:
         """Call `from_transfer_function_coeffs` passing the expression to `transfer_function_to_coeffs`."""
         return cls.from_transfer_function_coeffs(*transfer_function_to_coeffs(expr))
 
-
     def extended_to_quantum(self):
         """
         Extend to quantum state space to doubled-up ordering (see [#quantum]_).
@@ -225,15 +224,7 @@ class StateSpace:
 
     def pprint(self):
         """Pretty print the system matrices for debug or interactive programming purposes."""
-        print()
-        pprint(self.a, use_unicode=False)
-        print()
-        pprint(self.b, use_unicode=False)
-        print()
-        pprint(self.c, use_unicode=False)
-        print()
-        pprint(self.d, use_unicode=False)
-        print()
+        print(self)
 
     @property
     def num_degrees_of_freedom(self):
@@ -246,6 +237,20 @@ class StateSpace:
     @property
     def num_outputs(self):
         return self.c.shape[0]
+
+    def _repr_latex_(self):
+        """Display `StateSpace` in Jupyter notebook as LaTeX."""
+        from sympy.printing.latex import latex
+        lb = r"\\" if self.num_degrees_of_freedom > 4 else r",\,"  # only break lines if matrices are large
+        return f"$$\\displaystyle A={latex(self.a)}{lb}B={latex(self.b)}{lb}C={latex(self.c)}{lb}D={latex(self.d)}$$"
+
+    def __str__(self):
+        """Prettify the equation."""
+        from sympy.printing.pretty import pretty
+        return f"{pretty(self.a)}\n{pretty(self.b)}\n{pretty(self.c)}\n{pretty(self.d)}\n"
+
+    def __repr__(self):
+        return f"{repr(self.a)}\n{repr(self.b)}\n{repr(self.c)}\n{repr(self.d)}\n"
 
 
 def transfer_func_coeffs_to_state_space(numer, denom):
