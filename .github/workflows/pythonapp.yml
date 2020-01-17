@@ -17,6 +17,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install cython
+        pip install numpy  # qutip's setup.py needs numpy already installed...
         pip install -r requirements.txt
     - name: Lint with flake8
       run: |
