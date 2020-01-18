@@ -1,4 +1,5 @@
 from simba.errors import DimensionError
+from sympy import Matrix
 
 
 def halve_matrix(mat):
@@ -11,3 +12,14 @@ def halve_matrix(mat):
         raise DimensionError(f"Matrix dimensions not even: {mat.shape}")
 
     return mat.extract(range(mat.shape[0] // 2), range(mat.shape[1] // 2))
+
+
+def solve_matrix_eqn(eqn, x):
+    """
+    Solve matrix eqn for x, where eqn is a matrix equation (assumed equal to zero on RHS) and x is a sympy ``MatrixSymbol`` object.
+
+    Transforms all solutions to list of matrices (same shape as x).
+    """
+    from sympy import linsolve
+    sols = linsolve(list(eqn), list(x))
+    return list(map(lambda sol: Matrix(sol).reshape(*x.shape), sols))

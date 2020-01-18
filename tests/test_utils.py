@@ -1,7 +1,9 @@
 import pytest
 from simba.errors import DimensionError
-from simba.utils import halve_matrix
-from sympy.matrices import Matrix
+from simba.utils import halve_matrix, solve_matrix_eqn
+from simba.core import j_matrix
+from sympy import Rational
+from sympy.matrices import Matrix, MatrixSymbol
 
 
 def test_halving_matrix():
@@ -20,3 +22,17 @@ def test_halving_matrix():
 
     with pytest.raises(DimensionError):  # should raise error if odd dimensions
         halve_matrix(Matrix.eye(3))
+
+
+def test_solving_matrix_eqn():
+    # unstable filter
+    eye = Matrix.eye(2)
+    a = 2 * eye
+    b = eye
+    c = 4 * eye
+    d = b
+    j = j_matrix(2)
+    x = MatrixSymbol('X', *j.shape)
+
+    sol = solve_matrix_eqn(a * x + x * a.H + b * j * b.H, x)
+    assert len(sol) == 1 and sol[0] == Rational(-1, 4) * j
