@@ -292,8 +292,8 @@ class StateSpace:
         # reorder to paired operator form only if needed
         ss = self if self.paired_operator_form else self.reorder_to_paired_form()
         j = j_matrix(ss.num_degrees_of_freedom)
-        realisability1 = ss.a*j + j*ss.a.H + ss.b*j*ss.b.H
-        realisability2 = j*ss.c.H + ss.b*j*ss.d.H
+        realisability1 = ss.a * j + j * ss.a.H + ss.b * j * ss.b.H
+        realisability2 = j * ss.c.H + ss.b * j * ss.d.H
         cond1 = realisability1 == Matrix.zeros(*realisability1.shape)
         cond2 = realisability2 == Matrix.zeros(*realisability2.shape)
         return cond1 and cond2
