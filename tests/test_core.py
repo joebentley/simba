@@ -66,11 +66,22 @@ def test_should_error_if_transfer_function_coeffs_lists_are_wrong_length():
         StateSpace.from_transfer_function_coeffs([1, 2], [3, 4])
 
 
-def test_unstable_filter_to_state_space():
+def test_unstable_filter_realisation():
     s = symbols('s')
     tf_expected = (s - 2) / (s + 2)
-    tf_result = transfer_function_to_state_space(tf_expected).to_transfer_function()
-    assert simplify(tf_result) == tf_expected
+    ss = transfer_function_to_state_space(tf_expected)
+    tf_result = ss.to_transfer_function()
+    assert simplify(tf_result) == tf_expected, "Expected transfer function not recovered"
+    ss = ss.extended_to_quantum()
+    assert not ss.is_physically_realisable, "CCF state-space should not be physically realisable"
+
+    # test that physically realisable unstable filter state space is realisable
+    a = Matrix([[2, 0], [0, 2]])
+    b = 2 * Matrix([[0, 1], [-1, 0]])
+    c = 2 * Matrix([[0, -1], [1, 0]])
+    d = Matrix.eye(2)
+    assert StateSpace(a, b, c, d, quantum=True).is_physically_realisable,\
+        "Unstable filter state-space should be realisable"
 
 
 def test_state_space_to_transfer_function_throws_expected_errors():

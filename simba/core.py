@@ -94,12 +94,13 @@ class StateSpace:
          - b:     Input coupling
          - c:     Internal coupling to output
          - d:     Direct-feed (input to output)
-         - is_quantum:  whether or not system is quantum.
+         - quantum:  Whether or not system is quantum.
+         - paired_operator_form:  Whether or not system is in `paired operator form`.
 
     Note that the matrices are stored using ``sympy.ImmutableMatrix``, and so are immutable. New StateSpaces should
     be created from modified matrices instead.
     """
-    def __init__(self, a, b, c, d):
+    def __init__(self, a, b, c, d, *, quantum=False, paired_operator_form=False):
         self.a = ImmutableMatrix(a)
         self.b = ImmutableMatrix(b)
         self.c = ImmutableMatrix(c)
@@ -120,7 +121,8 @@ class StateSpace:
         if not lc == ld:
             raise DimensionError(f"Number of output channels for matrix c not equal to matrix d: {lc} != {ld}")
 
-        self.is_quantum = False  # used to remember whether system is extended to quantum state-space
+        self.quantum = quantum  # used to remember whether system is extended to quantum state-space
+        self.paired_operator_form = paired_operator_form  # set if the StateSpace is in `paired operator form`
 
     @classmethod
     def from_transfer_function_coeffs(cls, numer, denom):
@@ -187,12 +189,12 @@ class StateSpace:
 
         Raises `StateSpaceError` if already quantum.
         """
-        if self.is_quantum:
+        if self.quantum:
             raise StateSpaceError("System is already quantum.")
 
         quantum_ss = deepcopy(self)
 
-        quantum_ss.is_quantum = True
+        quantum_ss.quantum = True
         quantum_ss.a = ImmutableMatrix(BlockDiagMatrix(self.a, self.a.C))
         quantum_ss.b = ImmutableMatrix(BlockDiagMatrix(self.b, self.b.C))
         quantum_ss.c = ImmutableMatrix(BlockDiagMatrix(self.c, self.c.C))
@@ -206,12 +208,12 @@ class StateSpace:
 
         Raises `StateSpaceError` if not quantum.
         """
-        if not self.is_quantum:
+        if not self.quantum:
             raise StateSpaceError("System is not quantum.")
 
         classical_ss = deepcopy(self)
 
-        classical_ss.is_quantum = False
+        classical_ss.quantum = False
         classical_ss.a = halve_matrix(self.a)
         classical_ss.b = halve_matrix(self.b)
         classical_ss.c = halve_matrix(self.c)
@@ -228,7 +230,7 @@ class StateSpace:
 
         **TODO: work out how to do this for quantum systems**
         """
-        if self.is_quantum:
+        if self.quantum:
             raise StateSpaceError("Calculating transfer function for quantum systems is not yet implemented.")
         elif self.num_inputs != 1 or self.num_outputs != 1:
             raise DimensionError(f"System is not SISO: num_inputs == {self.num_inputs},"
@@ -257,7 +259,7 @@ class StateSpace:
 
         :return: StateSpace in paired up form.
         """
-        if not self.is_quantum:
+        if not self.quantum:
             raise StateSpaceError("StateSpace must be quantum.")
         # (1, 2, 3, 11, 22, 33) -> (1, 11, 2, 22, 3, 33)
         n = self.num_degrees_of_freedom
@@ -270,7 +272,31 @@ class StateSpace:
             u[x * 2 + 1, x + n // 2] = 1
 
         # apply transformation and return
-        return StateSpace(u*self.a*u.inv(), u*self.b*u.inv(), u*self.c*u.inv(), u*self.d*u.inv())
+        return StateSpace(u*self.a*u.inv(), u*self.b*u.inv(), u*self.c*u.inv(), u*self.d*u.inv(),
+                          paired_operator_form=True)
+
+    @property
+    def is_physically_realisable(self):
+        r"""
+        Test physical realisability conditions using the `paired operator form` of the state-space.
+
+        .. math::
+            AJ + JA^\dagger + BJB^\dagger &= 0, \\
+            JC^\dagger + BJD^\dagger &= 0.
+
+        Raise `StateSpaceError` if system is not quantum.
+        """
+        if not self.quantum:
+            raise StateSpaceError("System must be quantum.")
+
+        # reorder to paired operator form only if needed
+        ss = self if self.paired_operator_form else self.reorder_to_paired_form()
+        j = j_matrix(ss.num_degrees_of_freedom)
+        realisability1 = ss.a*j + j*ss.a.H + ss.b*j*ss.b.H
+        realisability2 = j*ss.c.H + ss.b*j*ss.d.H
+        cond1 = realisability1 == Matrix.zeros(*realisability1.shape)
+        cond2 = realisability2 == Matrix.zeros(*realisability2.shape)
+        return cond1 and cond2
 
     @property
     def num_degrees_of_freedom(self):
@@ -304,7 +330,7 @@ class StateSpace:
     def __eq__(self, other):
         """Equality for state spaces means that all the ABCD matrices are equal and both are or aren't quantum."""
         return self.a == other.a and self.b == other.b and self.c == other.c and self.d == other.d and \
-            self.is_quantum == other.is_quantum
+            self.quantum == other.quantum
 
     def __str__(self):
         """Prettify the equation."""
