@@ -16,11 +16,20 @@ def halve_matrix(mat):
 
 def solve_matrix_eqn(eqn, x):
     """
-    Solve matrix eqn for x, where eqn is a matrix equation (assumed equal to zero on RHS) and x is a
-    sympy ``MatrixSymbol`` object.
+    Solve matrix eqn for x, where eqn is a matrix equation or list of matrix equations (assumed equal to zero on RHS)
+    and x is a sympy ``MatrixSymbol`` object.
 
     Transforms all solutions to list of matrices (same shape as x).
     """
     from sympy import linsolve
-    sols = linsolve(list(eqn), list(x))
+
+    if isinstance(eqn, list):
+        eqns = []
+        for e in eqn:
+            print(e)
+            eqns.extend(list(e))  # make single list of all equations
+    else:
+        eqns = list(eqn)
+
+    sols = linsolve(eqns, list(x))
     return list(map(lambda sol: Matrix(sol).reshape(*x.shape), sols))

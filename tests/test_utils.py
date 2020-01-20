@@ -36,3 +36,7 @@ def test_solving_matrix_eqn():
 
     sol = solve_matrix_eqn(a * x + x * a.H + b * j * b.H, x)
     assert len(sol) == 1 and sol[0] == Rational(-1, 4) * j
+
+    # test two eqns
+    sol = solve_matrix_eqn([a * x + x * a.H + b * j * b.H, x * c.H + b * j * d.H], x)
+    assert len(sol) == 1 and sol[0] == Rational(-1, 4) * j

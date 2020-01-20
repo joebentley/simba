@@ -292,15 +292,11 @@ class StateSpace:
         # solve for x in both physical realisability equations
         j = j_matrix(self.num_degrees_of_freedom)
         x = MatrixSymbol('X', *j.shape)
-        sol = solve_matrix_eqn(a * x + x * a.H + b * j * b.H, x)
+        sol = solve_matrix_eqn([a * x + x * a.H + b * j * b.H, x * c.H + b * j * d.H], x)
         if len(sol) != 1:
             raise ResultError("Expected one and exactly one result.")
 
         x = sol[0]
-        other_cond = x * c.H + b * j * d.H
-        # TODO: need to solve both conditions simultaneously
-        if not other_cond == Matrix.zeros(*other_cond.shape):
-            raise ResultError("Solution did not solve second realisability condition.")
         if not x.is_hermitian:
             raise ResultError("X must be Hermitian.")
 
