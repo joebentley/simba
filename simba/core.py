@@ -377,13 +377,15 @@ class StateSpace:
         Return copy of state space transformed to a physically realisable state-space, or just return ``self`` if
         already physically realisable.
 
+        Transforms to `paired operator form` first if needed.
+
         Raise `StateSpaceError` if system is not quantum.
         """
         if self.is_physically_realisable:
             return self
 
         t = self.find_transformation_to_physically_realisable()
-        a, b, c, d = self.reorder_to_paired_form()
+        a, b, c, d = self if self.paired_operator_form else self.reorder_to_paired_form()
         a = t**-1 * a * t
         b = t**-1 * b
         c = c * t
