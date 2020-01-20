@@ -368,6 +368,21 @@ class StateSpace:
         assert p * j * p.H == x, "Result not recovered as expected!"
         return p
 
+    def to_skr(self):
+        """
+        Convert state space to SLH form as discussed in [synthesis]_, specifically returning the matrices
+        :math:`(S, K, R)`.
+        Assume physically realisable but won't error if it's not.
+
+        Raise `StateSpaceError` if system is not quantum.
+        """
+        if not self.quantum:
+            raise StateSpaceError("System must be quantum.")
+        from sympy import I, Rational
+        j = j_matrix(self.num_degrees_of_freedom)
+        SKR = namedtuple('SKR', ['s', 'k', 'r'])
+        return SKR(self.d, self.d**-1 * self.c, I * Rational(1, 4) * (j * self.a - self.a.H * j))
+
     def to_physically_realisable(self):
         """
         Return copy of state space transformed to a physically realisable state-space, or just return ``self`` if

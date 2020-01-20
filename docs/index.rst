@@ -60,3 +60,7 @@ References
 .. [squeezing-components]
     |br|
     Gough, J. E., James, M. R., & Nurdin, H. I. (2010). Squeezing components in linear quantum feedback networks. Physical Review A - Atomic, Molecular, and Optical Physics, 81(2). https://doi.org/10.1103/PhysRevA.81.023804
+
+.. [synthesis]
+    |br|
+    Nurdin, Hendra I., Matthew R. James, and Andrew C. Doherty. "Network Synthesis of Linear Dynamical Quantum Stochastic Systems." SIAM Journal on Control and Optimization 48.4 (2009): 2686–2718. Crossref. Web. https://arxiv.org/abs/0806.4448
