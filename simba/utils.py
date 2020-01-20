@@ -26,7 +26,6 @@ def solve_matrix_eqn(eqn, x):
     if isinstance(eqn, list):
         eqns = []
         for e in eqn:
-            print(e)
             eqns.extend(list(e))  # make single list of all equations
     else:
         eqns = list(eqn)
