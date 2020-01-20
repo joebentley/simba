@@ -1,8 +1,8 @@
 from copy import deepcopy
 from collections import namedtuple
-from sympy import Matrix, BlockDiagMatrix, Symbol, fraction, ImmutableMatrix
-from simba.utils import halve_matrix
-from simba.errors import DimensionError, CoefficientError, StateSpaceError
+from sympy import Matrix, BlockDiagMatrix, Symbol, fraction, ImmutableMatrix, MatrixSymbol
+from simba.utils import halve_matrix, solve_matrix_eqn
+from simba.errors import DimensionError, CoefficientError, StateSpaceError, ResultError
 from functools import lru_cache
 
 
@@ -274,6 +274,123 @@ class StateSpace:
         # apply transformation and return
         return StateSpace(u*self.a*u.inv(), u*self.b*u.inv(), u*self.c*u.inv(), u*self.d*u.inv(),
                           paired_operator_form=True)
+
+    def find_transformation_to_physically_realisable(self):
+        """
+        Return the :math:`T` matrix that transforms the state space into a physically realisable one.
+
+        TODO: needs a bit of testing
+
+        Raise `StateSpaceError` if system is not quantum.
+        """
+        if not self.quantum:
+            raise StateSpaceError("System must be quantum.")
+        if self.is_physically_realisable:
+            return self
+        a, b, c, d = self
+
+        # solve for x in both physical realisability equations
+        j = j_matrix(self.num_degrees_of_freedom)
+        x = MatrixSymbol('X', *j.shape)
+        sol = solve_matrix_eqn(a * x + x * a.H + b * j * b.H, x)
+        if len(sol) != 1:
+            raise ResultError("Expected one and exactly one result.")
+
+        x = sol[0]
+        other_cond = x * c.H + b * j * d.H
+        # TODO: need to solve both conditions simultaneously
+        if not other_cond == Matrix.zeros(*other_cond.shape):
+            raise ResultError("Solution did not solve second realisability condition.")
+        if not x.is_hermitian:
+            raise ResultError("X must be Hermitian.")
+
+        # diagonalise into X = P D P^\dagger where P is unitary via spectral theorem
+        # i-th column of P is the i-th orthogonal eigenvector of X
+        # i-th element of diagonal D is i-th real eigenvalue of X
+        p, d = x.diagonalize()
+        assert p.H == p**-1, "p should be unitary"
+        assert d.is_diagonal(), "d should be diagonal"
+        eigenvals = list(d.diagonal())
+
+        # need to re-arrange to form X = T J T^\dagger
+
+        # first check that there are equal number of positive and negative eigenvalues, only then can be reordered
+        # to match J
+        def is_even(v):
+            return v % 2 == 0
+
+        def is_odd(v):
+            return v % 2 != 0
+
+        def is_pos(v):
+            return v > 0
+
+        def is_neg(v):
+            return v < 0
+
+        if len(list(filter(lambda v: v > 0, eigenvals))) != len(list(filter(lambda v: v < 0, eigenvals))):
+            raise ResultError("Need equal number of positive and negative eigenvalues.")
+
+        # find positive and negative eigenvalues that are in the wrong positions in the diagonal matrix
+        from enum import Enum
+
+        class Sign(Enum):
+            POSITIVE = 1
+            NEGATIVE = 2
+
+        # return list of indices for eigenvalues in the wrong position for the given sign
+        def get_indices_of_evs_in_wrong_positions_for_sign(sign=Sign.POSITIVE):
+            return list(map(lambda v: v[0],
+                            filter(lambda v: is_odd(v[0]) if sign == Sign.POSITIVE else is_even(v[0]),
+                                   filter(lambda v: is_pos(v[1]) if sign == Sign.POSITIVE else is_neg(v[1]),
+                                          enumerate(eigenvals)))))
+
+        wrong_positive_indices = get_indices_of_evs_in_wrong_positions_for_sign(Sign.POSITIVE)
+        wrong_negative_indices = get_indices_of_evs_in_wrong_positions_for_sign(Sign.NEGATIVE)
+        indices_to_swap = zip(wrong_positive_indices, wrong_negative_indices)
+
+        for wrong_pos_index, wrong_neg_index in indices_to_swap:
+            # swap the eigenvalues
+            eigenvals[wrong_pos_index], eigenvals[wrong_neg_index] = \
+                eigenvals[wrong_neg_index], eigenvals[wrong_pos_index]
+            # swap the eigenvectors
+            p.col_swap(wrong_pos_index, wrong_neg_index)
+
+        assert (len(get_indices_of_evs_in_wrong_positions_for_sign(Sign.POSITIVE)) == 0 and
+                len(get_indices_of_evs_in_wrong_positions_for_sign(Sign.NEGATIVE)) == 0), \
+            "Eigenvalues still not in order!"
+
+        # factor out the square root of each eigenvalue into the eigenvectors
+        from sympy import sqrt, simplify
+        scaled_evs = []
+        for i, ev in enumerate(eigenvals):
+            scale = abs(ev)
+            scaled_evs.append(simplify(ev / scale))
+            p[:, i] *= sqrt(scale)
+
+        assert Matrix.diag(scaled_evs) == j, "Scaled eigenvalues matrix not recovered!"
+        assert p * j * p.H == x, "Result not recovered as expected!"
+        return p
+
+    def to_physically_realisable(self):
+        """
+        Return copy of state space transformed to a physically realisable state-space, or just return ``self`` if
+        already physically realisable.
+
+        Raise `StateSpaceError` if system is not quantum.
+        """
+        if self.is_physically_realisable:
+            return self
+
+        t = self.find_transformation_to_physically_realisable()
+        a, b, c, d = self.reorder_to_paired_form()
+        a = t**-1 * a * t
+        b = t**-1 * b
+        c = c * t
+        d = d
+        ss = StateSpace(a, b, c, d, quantum=True, paired_operator_form=True)
+        assert ss.is_physically_realisable, "Result was not physically realisable!"
+        return ss
 
     @property
     def is_physically_realisable(self):

@@ -8,3 +8,7 @@ class CoefficientError(Exception):
 
 class StateSpaceError(Exception):
     """Represents a miscellaneous error involving `StateSpace`."""
+
+
+class ResultError(Exception):
+    """Represents an error involving the result of some calculation."""

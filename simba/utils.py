@@ -16,7 +16,8 @@ def halve_matrix(mat):
 
 def solve_matrix_eqn(eqn, x):
     """
-    Solve matrix eqn for x, where eqn is a matrix equation (assumed equal to zero on RHS) and x is a sympy ``MatrixSymbol`` object.
+    Solve matrix eqn for x, where eqn is a matrix equation (assumed equal to zero on RHS) and x is a
+    sympy ``MatrixSymbol`` object.
 
     Transforms all solutions to list of matrices (same shape as x).
     """

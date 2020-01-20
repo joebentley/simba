@@ -2,7 +2,7 @@
 import pytest
 from simba import *
 from simba.core import j_matrix
-from sympy import Matrix, I, pprint, simplify, symbols
+from sympy import Matrix, I, pprint, simplify, symbols, Rational
 
 
 def test_j_matrix():
@@ -82,6 +82,9 @@ def test_unstable_filter_realisation():
     d = Matrix.eye(2)
     assert StateSpace(a, b, c, d, quantum=True).is_physically_realisable,\
         "Unstable filter state-space should be realisable"
+
+    ss_2 = ss.to_physically_realisable()
+    assert ss_2.is_physically_realisable, "Result should be physically realisable"
 
 
 def test_state_space_to_transfer_function_throws_expected_errors():
