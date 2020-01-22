@@ -347,6 +347,13 @@ class StateSpace:
         SKR = namedtuple('SKR', ['s', 'k', 'r'])
         return SKR(self.d, self.d**-1 * self.c, I * Rational(1, 4) * (j * self.a - self.a.H * j))
 
+    def to_slh(self, symbol):
+        """Create `StateSpace.to_skr` returning an `SLH` object using given symbol name `symbol`."""
+        s, k, r = self.to_skr()
+        l = linear_coupling_operator_from_k_matrix(k, symbol)
+        h = hamiltonian_from_r_matrix(r, symbol)
+        return SLH(s, l, h)
+
     def to_physically_realisable(self):
         """
         Return copy of state space transformed to a physically realisable state-space, or just return ``self`` if
@@ -496,8 +503,38 @@ def transfer_function_to_coeffs(expr):
 
 
 class SLH:
-    """Represents a generalised open oscillator in the SLH formalism. [synthesis]_"""
-    pass
+    """
+    Represents a generalised open oscillator in the SLH formalism. [synthesis]_
+
+    Attributes:
+        - ``s``: scattering matrix
+        - ``l_operator``: linear coupling operator
+        - ``hamiltonian``: internal system Hamiltonian operator
+    """
+
+    def __init__(self, s, l_operator, hamiltonian):
+        """Construct generalised open oscillator :math:`G = (S, L, H)`."""
+        self.s = s
+        self.l_operator = l_operator
+        self.hamiltonian = hamiltonian
+
+    def _repr_latex_(self):
+        """Display `SLH` in Jupyter notebook as LaTeX."""
+        from sympy.printing.latex import latex
+
+        s_latex_string = None
+        # check if S is identity, if so display identity matrix instead
+        n = self.s.shape[0]
+        if self.s == Matrix.eye(n):
+            s_latex_string = r"I_{%d\times%d}" % (n, n)
+        else:
+            s_latex_string = latex(self.s)
+
+        return r"$$\displaystyle \left(%s, %s, %s\right)$$"\
+               % (s_latex_string, latex(self.l_operator), latex(self.hamiltonian))
+
+    def __repr__(self):
+        return f"({repr(self.s)}, {repr(self.l_operator)}, {repr(self.hamiltonian)})"
 
 
 def interaction_hamiltonian_from_k_matrix(k_matrix):
@@ -513,7 +550,7 @@ def interaction_hamiltonian_from_linear_coupling_operator(l_operator):
 
     where :math:`\eta = (\eta_1, \eta_1^\dagger; \dots; \eta_m, \eta_m^\dagger)^T`
 
-    TODO: check this properly, not totally sure about the dimensions of :math:`\eta`
+    TODO: check this properly, not totally sure about the dimensions of :math:`\eta`, not sure if this is correct at all
 
     Raises `DimensionError` if not ``l_operator`` not a column vector or does not have an even number of rows.
     """
@@ -530,7 +567,7 @@ def interaction_hamiltonian_from_linear_coupling_operator(l_operator):
     return simplify(h_int[0, 0])
 
 
-def linear_coupling_operator_from_k_matrix(k_matrix):
+def linear_coupling_operator_from_k_matrix(k_matrix, symbol='a'):
     r"""
     Calculate symbolic linear coupling operator from K matrix assuming `paired operator form`.
 
@@ -539,16 +576,18 @@ def linear_coupling_operator_from_k_matrix(k_matrix):
 
     where :math:`x_0 = (a_1, a_1^\dagger; \dots; a_n, a_n^\dagger)^T`.
 
+    ``symbol`` is the symbol name to use for the state variables.
+
     Raises `DimensionError` if not an even number of dimensions.
     """
     if k_matrix.shape[0] % 2 != 0 or k_matrix.shape[1] % 2 != 0:
         raise DimensionError(f"k_matrix does not have even dimensions: {k_matrix.shape}")
 
-    states = make_complex_ladder_state(k_matrix.shape[1] // 2)
+    states = make_complex_ladder_state(k_matrix.shape[1] // 2, symbol)
     return k_matrix * states
 
 
-def hamiltonian_from_r_matrix(r_matrix):
+def hamiltonian_from_r_matrix(r_matrix, symbol='a'):
     r"""
     Calculate symbolic Hamiltonian from R matrix assuming `paired operator form`.
 
@@ -557,6 +596,8 @@ def hamiltonian_from_r_matrix(r_matrix):
 
     where :math:`x_0 = (a_1, a_1^\dagger; \dots; a_n, a_n^\dagger)` and :math:`R \in \mathbb{R}^{2n\times2n}`.
 
+    ``symbol`` is the symbol name to use for the state variables.
+
     Raises `DimensionError` if not an even number of dimensions or if not square.
     """
     if not r_matrix.is_square:
@@ -564,7 +605,7 @@ def hamiltonian_from_r_matrix(r_matrix):
     if r_matrix.shape[0] % 2 != 0:
         raise DimensionError(f"R does not have even number of rows/columns: {r_matrix.shape}")
 
-    states = make_complex_ladder_state(r_matrix.shape[0] // 2)
+    states = make_complex_ladder_state(r_matrix.shape[0] // 2, symbol)
     hamiltonian = states.H * r_matrix * states
     if hamiltonian.shape != (1, 1):
         raise DimensionError(f"Expected Hamiltonian to be a scalar, instead: {hamiltonian.shape}")
