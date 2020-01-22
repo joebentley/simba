@@ -29,7 +29,9 @@ author = 'Joe Bentley'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.imgmath'
+    'sphinx.ext.imgmath',
+    # 'sphinx.ext.linkcode',
+    'sphinx.ext.viewcode'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -78,3 +80,13 @@ def skip(app, what, name, obj, would_skip, options):
 
 def setup(app):
     app.connect("autodoc-skip-member", skip)
+
+
+# def linkcode_resolve(domain, info):
+#     if domain != 'py':
+#         return None
+#     if not info['module']:
+#         return None
+#     filename = info['module'].replace('.', '/')
+#     print(info)
+#     return f"https://github.com/joebentley/simba/tree/master/{filename}.py"
