@@ -6,90 +6,19 @@ from simba.errors import DimensionError, CoefficientError, StateSpaceError, Resu
 from functools import lru_cache
 
 
-def j_matrix(num_dof):
-    r"""
-    Return quantum :math:`J` matrix for a `paired operator form` `StateSpace` with given ``num_dof``,
-
-    .. math::
-        J = \text{diag}(1, -1;\dots;1, -1) \in \mathbb{R}^{2n\times 2n}.
-
-    Raises ``ValueError`` if num_dof is not even.
-    """
-    if num_dof % 2 != 0:
-        raise ValueError("num_dof should be even for a quantum system")
-    return Matrix.diag([1, -1] * (num_dof // 2))
+def transfer_func_coeffs_to_state_space(numer, denom):
+    """See `StateSpace.from_transfer_function_coeffs`."""
+    return StateSpace.from_transfer_function_coeffs(numer, denom)
 
 
-def transfer_function_to_coeffs(expr):
-    """
-    Extract transfer function coefficients from the given expression which is a function of frequency :math:`s` and a
-    ratio of two polynomials.
-
-    Returns a namedtuple containing two lists of length n and n-1 for the numerator and denominator respectively
-    in *order of ascending powers*, where n is the order of expr in :math:`s`.
-
-    The numerator list will be padded if the denominator is higher order than the numerator.
-
-    A ``NotImplementedError`` will be raised if the denominator is lower order than the numerator.
-
-    The coefficients are normalised such that the coefficient of the highest order term in the denominator is one.
-
-    :param expr: ratio of two polynomials in :math:`s`
-    :return: ``Coefficients`` namedtuple with fields: ``(numer=[b_n, ..., b_0], denom=[a_n, ..., a_1])``
-    """
-    s = Symbol('s')
-    numers_and_denoms = tuple(map(lambda e: list(reversed(e.as_poly(s).all_coeffs())), fraction(expr)))
-    numer_coeffs, denom_coeffs = numers_and_denoms
-
-    if len(numer_coeffs) > len(denom_coeffs):
-        raise NotImplementedError("TODO: currently denominator can't be lower order than numerator")
-
-    # normalize w.r.t. highest order coeff in denominator
-    highest_order_denom = denom_coeffs[-1]
-
-    numer_coeffs, denom_coeffs = map(lambda coeffs: [n / highest_order_denom for n in coeffs], numers_and_denoms)
-
-    # pad numer_coeffs with zeros at end until length of denom_coeffs
-    numer_coeffs.extend([0] * (len(denom_coeffs) - len(numer_coeffs)))
-
-    assert denom_coeffs[-1] == 1, "sanity check on normalisation failed"
-    denom_coeffs = denom_coeffs[:-1]  # drop last element of denoms
-    assert len(denom_coeffs) == len(numer_coeffs) - 1, "sanity check on lengths failed"
-
-    Coefficients = namedtuple('Coefficients', ['numer', 'denom'])
-    return Coefficients(numer=numer_coeffs, denom=denom_coeffs)
+def transfer_function_to_state_space(expr):
+    """See `StateSpace.from_transfer_function`."""
+    return StateSpace.from_transfer_function(expr)
 
 
-def make_complex_ladder_state(num_dofs):
-    r"""
-    Return matrix of complex ladder operators with ``2 * num_dofs`` elements.
-
-    For example, for ``num_dofs == 2``, result is :math:`(a_1, a_1^\dagger; a_2, a_2^\dagger)^T`.
-    """
-    states = []
-
-    for i in range(num_dofs):
-        s = Symbol(f"a_{i + 1}", commutative=False)
-        states.append(s)
-        states.append(s.conjugate())
-
-    return Matrix(states)
-
-
-def hamiltonian_from_r_matrix(r_matrix):
-    """
-    Calculate symbolic Hamiltonian from R matrix assuming complex operator form.
-
-    Raises `DimensionError` if not an even number of dimensions or if not square.
-    """
-    if not r_matrix.is_square or r_matrix.shape[0] % 2 != 0:
-        raise DimensionError(f"r_matrix not even dimensioned or not square: {r_matrix.shape}")
-
-    states = make_complex_ladder_state(r_matrix.shape[0] // 2)
-    hamiltonian = states.H * r_matrix * states
-    if hamiltonian.shape != (1, 1):
-        raise DimensionError("Expected Hamiltonian to be a scalar.")
-    return hamiltonian[0, 0]
+def transfer_function_to_realisable_state_space(expr):
+    """Convert given transfer function to physically realisable state space if possible."""
+    return transfer_function_to_state_space(expr).extended_to_quantum().to_physically_realisable()
 
 
 class SLH:
@@ -511,16 +440,87 @@ class StateSpace:
         return hash(tuple(self))
 
 
-def transfer_func_coeffs_to_state_space(numer, denom):
-    """See `StateSpace.from_transfer_function_coeffs`."""
-    return StateSpace.from_transfer_function_coeffs(numer, denom)
+def j_matrix(num_dof):
+    r"""
+    Return quantum :math:`J` matrix for a `paired operator form` `StateSpace` with given ``num_dof``,
+
+    .. math::
+        J = \text{diag}(1, -1;\dots;1, -1) \in \mathbb{R}^{2n\times 2n}.
+
+    Raises ``ValueError`` if num_dof is not even.
+    """
+    if num_dof % 2 != 0:
+        raise ValueError("num_dof should be even for a quantum system")
+    return Matrix.diag([1, -1] * (num_dof // 2))
 
 
-def transfer_function_to_state_space(expr):
-    """See `StateSpace.from_transfer_function`."""
-    return StateSpace.from_transfer_function(expr)
+def transfer_function_to_coeffs(expr):
+    """
+    Extract transfer function coefficients from the given expression which is a function of frequency :math:`s` and a
+    ratio of two polynomials.
+
+    Returns a namedtuple containing two lists of length n and n-1 for the numerator and denominator respectively
+    in *order of ascending powers*, where n is the order of expr in :math:`s`.
+
+    The numerator list will be padded if the denominator is higher order than the numerator.
+
+    A ``NotImplementedError`` will be raised if the denominator is lower order than the numerator.
+
+    The coefficients are normalised such that the coefficient of the highest order term in the denominator is one.
+
+    :param expr: ratio of two polynomials in :math:`s`
+    :return: ``Coefficients`` namedtuple with fields: ``(numer=[b_n, ..., b_0], denom=[a_n, ..., a_1])``
+    """
+    s = Symbol('s')
+    numers_and_denoms = tuple(map(lambda e: list(reversed(e.as_poly(s).all_coeffs())), fraction(expr)))
+    numer_coeffs, denom_coeffs = numers_and_denoms
+
+    if len(numer_coeffs) > len(denom_coeffs):
+        raise NotImplementedError("TODO: currently denominator can't be lower order than numerator")
+
+    # normalize w.r.t. highest order coeff in denominator
+    highest_order_denom = denom_coeffs[-1]
+
+    numer_coeffs, denom_coeffs = map(lambda coeffs: [n / highest_order_denom for n in coeffs], numers_and_denoms)
+
+    # pad numer_coeffs with zeros at end until length of denom_coeffs
+    numer_coeffs.extend([0] * (len(denom_coeffs) - len(numer_coeffs)))
+
+    assert denom_coeffs[-1] == 1, "sanity check on normalisation failed"
+    denom_coeffs = denom_coeffs[:-1]  # drop last element of denoms
+    assert len(denom_coeffs) == len(numer_coeffs) - 1, "sanity check on lengths failed"
+
+    Coefficients = namedtuple('Coefficients', ['numer', 'denom'])
+    return Coefficients(numer=numer_coeffs, denom=denom_coeffs)
 
 
-def transfer_function_to_realisable_state_space(expr):
-    """Convert given transfer function to physically realisable state space if possible."""
-    return transfer_function_to_state_space(expr).extended_to_quantum().to_physically_realisable()
+def make_complex_ladder_state(num_dofs):
+    r"""
+    Return matrix of complex ladder operators with ``2 * num_dofs`` elements.
+
+    For example, for ``num_dofs == 2``, result is :math:`(a_1, a_1^\dagger; a_2, a_2^\dagger)^T`.
+    """
+    states = []
+
+    for i in range(num_dofs):
+        s = Symbol(f"a_{i + 1}", commutative=False)
+        states.append(s)
+        states.append(s.conjugate())
+
+    return Matrix(states)
+
+
+def hamiltonian_from_r_matrix(r_matrix):
+    """
+    Calculate symbolic Hamiltonian from R matrix assuming complex operator form.
+
+    Raises `DimensionError` if not an even number of dimensions or if not square.
+    """
+    if not r_matrix.is_square or r_matrix.shape[0] % 2 != 0:
+        raise DimensionError(f"r_matrix not even dimensioned or not square: {r_matrix.shape}")
+
+    states = make_complex_ladder_state(r_matrix.shape[0] // 2)
+    hamiltonian = states.H * r_matrix * states
+    if hamiltonian.shape != (1, 1):
+        raise DimensionError("Expected Hamiltonian to be a scalar.")
+    return hamiltonian[0, 0]
