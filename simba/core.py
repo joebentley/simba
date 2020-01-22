@@ -500,31 +500,89 @@ class SLH:
     pass
 
 
-def hamiltonian_from_r_matrix(r_matrix):
+def interaction_hamiltonian_from_k_matrix(k_matrix):
+    return interaction_hamiltonian_from_linear_coupling_operator(linear_coupling_operator_from_k_matrix(k_matrix))
+
+
+def interaction_hamiltonian_from_linear_coupling_operator(l_operator):
+    r"""
+    Calculate the idealised interaction hamiltonian for the given linear coupling operator.
+
+    .. math::
+        H_\text{int}(t) = i(L^T \eta(t)^* - L^\dagger \eta(t)),
+
+    where :math:`\eta = (\eta_1, \eta_1^\dagger; \dots; \eta_m, \eta_m^\dagger)^T`
+
+    TODO: check this properly, not totally sure about the dimensions of :math:`\eta`
+
+    Raises `DimensionError` if not ``l_operator`` not a column vector or does not have an even number of rows.
     """
-    Calculate symbolic Hamiltonian from R matrix assuming complex operator form.
+    if l_operator.shape[1] != 1:
+        raise DimensionError(f"L is not a column vector: {l_operator.shape}")
+    if l_operator.shape[0] % 2 != 0:
+        raise DimensionError(f"L does not have even number of rows: {l_operator.shape}")
+
+    from sympy import I, simplify
+    states = make_complex_ladder_state(l_operator.shape[1], "eta")
+    h_int = I * (l_operator.T * states.conjugate() - l_operator.H * states)
+    if h_int.shape != (1, 1):
+        raise DimensionError(f"Expected interaction Hamiltonian to be scalar, instead: {h_int.shape}")
+    return simplify(h_int[0, 0])
+
+
+def linear_coupling_operator_from_k_matrix(k_matrix):
+    r"""
+    Calculate symbolic linear coupling operator from K matrix assuming `paired operator form`.
+
+    .. math::
+        L = K x_0,
+
+    where :math:`x_0 = (a_1, a_1^\dagger; \dots; a_n, a_n^\dagger)^T`.
+
+    Raises `DimensionError` if not an even number of dimensions.
+    """
+    if k_matrix.shape[0] % 2 != 0 or k_matrix.shape[1] % 2 != 0:
+        raise DimensionError(f"k_matrix does not have even dimensions: {k_matrix.shape}")
+
+    states = make_complex_ladder_state(k_matrix.shape[1] // 2)
+    return k_matrix * states
+
+
+def hamiltonian_from_r_matrix(r_matrix):
+    r"""
+    Calculate symbolic Hamiltonian from R matrix assuming `paired operator form`.
+
+    .. math::
+        H = x_0^\dagger R x_0,
+
+    where :math:`x_0 = (a_1, a_1^\dagger; \dots; a_n, a_n^\dagger)` and :math:`R \in \mathbb{R}^{2n\times2n}`.
 
     Raises `DimensionError` if not an even number of dimensions or if not square.
     """
-    if not r_matrix.is_square or r_matrix.shape[0] % 2 != 0:
-        raise DimensionError(f"r_matrix not even dimensioned or not square: {r_matrix.shape}")
+    if not r_matrix.is_square:
+        raise DimensionError(f"R is not square: {r_matrix.shape}")
+    if r_matrix.shape[0] % 2 != 0:
+        raise DimensionError(f"R does not have even number of rows/columns: {r_matrix.shape}")
 
     states = make_complex_ladder_state(r_matrix.shape[0] // 2)
     hamiltonian = states.H * r_matrix * states
     if hamiltonian.shape != (1, 1):
-        raise DimensionError("Expected Hamiltonian to be a scalar.")
+        raise DimensionError(f"Expected Hamiltonian to be a scalar, instead: {hamiltonian.shape}")
     return hamiltonian[0, 0]
 
-def make_complex_ladder_state(num_dofs):
+
+def make_complex_ladder_state(num_dofs, symbol='a'):
     r"""
     Return matrix of complex ladder operators with ``2 * num_dofs`` elements.
+
+    Use ``symbol`` keyword arg to set alternative symbol for variables instead of using ``a``
 
     For example, for ``num_dofs == 2``, result is :math:`(a_1, a_1^\dagger; a_2, a_2^\dagger)^T`.
     """
     states = []
 
     for i in range(num_dofs):
-        s = Symbol(f"a_{i + 1}", commutative=False)
+        s = Symbol(f"{symbol}_{i + 1}", commutative=False)
         states.append(s)
         states.append(s.conjugate())
 
