@@ -62,7 +62,7 @@ def transfer_function_to_coeffs(expr):
 
 def make_complex_ladder_state(num_dofs):
     r"""
-    Return matrix of complex ladder operators with ``2 * num_dofs'' elements.
+    Return matrix of complex ladder operators with ``2 * num_dofs`` elements.
 
     For example, for ``num_dofs == 2``, result is :math:`(a_1, a_1^\dagger; a_2, a_2^\dagger)^T`.
     """
@@ -90,6 +90,11 @@ def hamiltonian_from_r_matrix(r_matrix):
     if hamiltonian.shape != (1, 1):
         raise DimensionError("Expected Hamiltonian to be a scalar.")
     return hamiltonian[0, 0]
+
+
+class SLH:
+    """Represents a generalised open oscillator in the SLH formalism. [synthesis]_"""
+    pass
 
 
 class StateSpace:
