@@ -6,6 +6,9 @@ from simba.errors import DimensionError, CoefficientError, StateSpaceError, Resu
 from functools import lru_cache
 
 
+"""State-spaces and transfer functions"""
+
+
 def transfer_func_coeffs_to_state_space(numer, denom):
     """See `StateSpace.from_transfer_function_coeffs`."""
     return StateSpace.from_transfer_function_coeffs(numer, denom)
@@ -19,11 +22,6 @@ def transfer_function_to_state_space(expr):
 def transfer_function_to_realisable_state_space(expr):
     """Convert given transfer function to physically realisable state space if possible."""
     return transfer_function_to_state_space(expr).extended_to_quantum().to_physically_realisable()
-
-
-class SLH:
-    """Represents a generalised open oscillator in the SLH formalism. [synthesis]_"""
-    pass
 
 
 class StateSpace:
@@ -494,20 +492,12 @@ def transfer_function_to_coeffs(expr):
     return Coefficients(numer=numer_coeffs, denom=denom_coeffs)
 
 
-def make_complex_ladder_state(num_dofs):
-    r"""
-    Return matrix of complex ladder operators with ``2 * num_dofs`` elements.
+"""SLH formalism"""
 
-    For example, for ``num_dofs == 2``, result is :math:`(a_1, a_1^\dagger; a_2, a_2^\dagger)^T`.
-    """
-    states = []
 
-    for i in range(num_dofs):
-        s = Symbol(f"a_{i + 1}", commutative=False)
-        states.append(s)
-        states.append(s.conjugate())
-
-    return Matrix(states)
+class SLH:
+    """Represents a generalised open oscillator in the SLH formalism. [synthesis]_"""
+    pass
 
 
 def hamiltonian_from_r_matrix(r_matrix):
@@ -524,3 +514,19 @@ def hamiltonian_from_r_matrix(r_matrix):
     if hamiltonian.shape != (1, 1):
         raise DimensionError("Expected Hamiltonian to be a scalar.")
     return hamiltonian[0, 0]
+
+def make_complex_ladder_state(num_dofs):
+    r"""
+    Return matrix of complex ladder operators with ``2 * num_dofs`` elements.
+
+    For example, for ``num_dofs == 2``, result is :math:`(a_1, a_1^\dagger; a_2, a_2^\dagger)^T`.
+    """
+    states = []
+
+    for i in range(num_dofs):
+        s = Symbol(f"a_{i + 1}", commutative=False)
+        states.append(s)
+        states.append(s.conjugate())
+
+    return Matrix(states)
+
