@@ -185,23 +185,9 @@ class StateSpace:
         return classical_ss
 
     def to_transfer_function(self):
-        """
-        Calculate `SISO` transfer function for the system using the convention given by [#laplace]_.
-
-        Raise `StateSpaceError` if system is not classical.
-
-        Raise `DimensionError` if system has more than one input or output.
-
-        **TODO: work out how to do this for quantum systems**
-        """
-        if self.quantum:
-            raise StateSpaceError("Calculating transfer function for quantum systems is not yet implemented.")
-        elif self.num_inputs != 1 or self.num_outputs != 1:
-            raise DimensionError(f"System is not SISO: num_inputs == {self.num_inputs},"
-                                 f"num_outputs == {self.num_outputs}")
-        else:
-            s = Symbol('s')
-            return (self.c * (-s * Matrix.eye(self.a.shape[0]) - self.a).inv() * self.b + self.d)[0, 0]
+        """Calculate transfer function matrix for the system using the convention given by [#laplace]_."""
+        s = Symbol('s')
+        return self.c * (-s * Matrix.eye(self.a.shape[0]) - self.a).inv() * self.b + self.d
 
     @lru_cache()
     def reorder_to_paired_form(self):

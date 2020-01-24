@@ -70,7 +70,7 @@ def test_unstable_filter_realisation():
     s = symbols('s')
     tf_expected = (s - 2) / (s + 2)
     ss = transfer_function_to_state_space(tf_expected)
-    tf_result = ss.to_transfer_function()
+    tf_result = ss.to_transfer_function()[0, 0]
     assert simplify(tf_result) == tf_expected, "Expected transfer function not recovered"
     ss = ss.extended_to_quantum()
     assert not ss.is_physically_realisable, "CCF state-space should not be physically realisable"
@@ -87,13 +87,12 @@ def test_unstable_filter_realisation():
     assert ss_2.is_physically_realisable, "Result should be physically realisable"
 
 
-def test_state_space_to_transfer_function_throws_expected_errors():
-    ss = example_statespace()
-    with pytest.raises(StateSpaceError):
-        ss.extended_to_quantum().to_transfer_function()
-    ss = example_two_input_two_output()
-    with pytest.raises(DimensionError):
-        ss.to_transfer_function()
+def test_state_space_to_transfer_function_for_quantum_system():
+    s = symbols('s')
+    tf_expected = (s - 2) / (s + 2)
+    ss = transfer_function_to_state_space(tf_expected).extended_to_quantum()
+    assert simplify(ss.to_transfer_function() - Matrix.diag(tf_expected, tf_expected)) == Matrix.zeros(2), \
+        "Expected transfer function not recovered"
 
 
 def test_extending_to_quantum_state_space():
