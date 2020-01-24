@@ -350,9 +350,8 @@ class StateSpace:
     def to_slh(self, symbol):
         """Create `StateSpace.to_skr` returning an `SLH` object using given symbol name `symbol`."""
         s, k, r = self.to_skr()
-        l = linear_coupling_operator_from_k_matrix(k, symbol)
-        h = hamiltonian_from_r_matrix(r, symbol)
-        return SLH(s, l, h)
+        x0 = make_complex_ladder_state(r.shape[0] // 2, symbol)
+        return SLH(s, k, r, x0)
 
     def to_physically_realisable(self):
         """
@@ -502,21 +501,30 @@ def transfer_function_to_coeffs(expr):
 """SLH formalism"""
 
 
+def concat(a, b):
+    """Concatenate two `SLH` systems using the concatenation product. [synthesis]_"""
+    s = Matrix(BlockDiagMatrix(a.s, b.s))
+    # x0 = Matrix(a.x0
+    # return SLH(s, )
+
+
 class SLH:
     """
     Represents a generalised open oscillator in the SLH formalism. [synthesis]_
 
     Attributes:
         - ``s``: scattering matrix
-        - ``l_operator``: linear coupling operator
-        - ``hamiltonian``: internal system Hamiltonian operator
+        - ``k``: linear coupling matrix
+        - ``r``: internal system Hamiltonian matrix
+        - ``x0``: system state Symbols
     """
 
-    def __init__(self, s, l_operator, hamiltonian):
+    def __init__(self, s, k, r, x0):
         """Construct generalised open oscillator :math:`G = (S, L, H)`."""
         self.s = s
-        self.l_operator = l_operator
-        self.hamiltonian = hamiltonian
+        self.k = k
+        self.r = r
+        self.x0 = x0
 
     def _repr_latex_(self):
         """Display `SLH` in Jupyter notebook as LaTeX."""
@@ -530,11 +538,13 @@ class SLH:
         else:
             s_latex_string = latex(self.s)
 
-        return r"$$\displaystyle \left(%s, %s, %s\right)$$"\
-               % (s_latex_string, latex(self.l_operator), latex(self.hamiltonian))
+        x0d = latex(self.x0.H)
+        x0 = latex(self.x0)
+        return r"$$\displaystyle \left(%s, %s %s, \frac{1}{2} %s %s %s\right)$$"\
+               % (s_latex_string, latex(self.k), x0, x0d, latex(self.r), x0)
 
     def __repr__(self):
-        return f"({repr(self.s)}, {repr(self.l_operator)}, {repr(self.hamiltonian)})"
+        return f"({repr(self.s)}, {repr(self.k)}, {repr(self.r)})"
 
 
 def interaction_hamiltonian_from_k_matrix(k_matrix):
