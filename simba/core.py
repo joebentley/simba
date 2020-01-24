@@ -96,7 +96,7 @@ class StateSpace:
         ladder operators :math:`(a, a^\dagger)` are used.
 
         The coefficients are defined via the transfer function between the input :math:`u(s)` and
-        the output :math:`y(s)`, where :math:`s` is the complex Laplace frequency,[#laplace]_
+        the output :math:`y(s)`, where :math:`s` is the complex Laplace frequency, [#laplace]_
 
         .. math::
             \frac{y(s)}{u(s)} = \frac{b_0 s^n + b_1 s^{n-1} + \dots + b_{n-1} s + b_n}
@@ -231,12 +231,15 @@ class StateSpace:
 
         TODO: needs a bit of testing
 
-        Raise `StateSpaceError` if system is not quantum.
+        Raise `StateSpaceError` if system is not quantum or if system is not possible to physically realise.
         """
         if not self.quantum:
             raise StateSpaceError("System must be quantum.")
+
+        self.raise_error_if_not_possible_to_realise()
+
         if self.is_physically_realisable:
-            return self
+            return Matrix.eye(self.num_degrees_of_freedom)
         a, b, c, d = self
 
         # solve for x in both physical realisability equations
@@ -318,27 +321,6 @@ class StateSpace:
         assert p * j * p.H == x, "Result not recovered as expected!"
         return p
 
-    def to_skr(self):
-        """
-        Convert state space to SLH form as discussed in [synthesis]_, specifically returning the matrices
-        :math:`(S, K, R)`.
-        Assume physically realisable but won't error if it's not.
-
-        Raise `StateSpaceError` if system is not quantum.
-        """
-        if not self.quantum:
-            raise StateSpaceError("System must be quantum.")
-        from sympy import I, Rational
-        j = j_matrix(self.num_degrees_of_freedom)
-        SKR = namedtuple('SKR', ['s', 'k', 'r'])
-        return SKR(self.d, self.d**-1 * self.c, I * Rational(1, 4) * (j * self.a - self.a.H * j))
-
-    def to_slh(self, symbol):
-        """Create `StateSpace.to_skr` returning an `SLH` object using given symbol name `symbol`."""
-        s, k, r = self.to_skr()
-        x0 = make_complex_ladder_state(r.shape[0] // 2, symbol)
-        return SLH(s, k, r, x0)
-
     def to_physically_realisable(self):
         """
         Return copy of state space transformed to a physically realisable state-space, or just return ``self`` if
@@ -383,6 +365,58 @@ class StateSpace:
         cond1 = realisability1 == Matrix.zeros(*realisability1.shape)
         cond2 = realisability2 == Matrix.zeros(*realisability2.shape)
         return cond1 and cond2
+
+    def raise_error_if_not_possible_to_realise(self):
+        r"""
+        Raises `StateSpaceError` if system cannot be physically realised according to the conditions,
+
+        .. math::
+            \mathbf{G}^\sim(s) J \mathbf{G}(s) = J,\ \ D J D^\dagger = J,
+
+        where :math:`\mathbf{G}(s)` is the system's transfer matrix (returned by `StateSpace.to_transfer_function`),
+        and :math:`\mathbf{G}^\sim(s) \equiv \mathbf{G}^\dag(-s^*)`.
+
+        *Note* this does not imply that the system matrices :math:`(A, B, C, D)` are physically realisable, just that
+        they can be transformed to a physically realisable form.
+
+        Raise `StateSpaceError` if system is not quantum.
+        """
+        if not self.quantum:
+            raise StateSpaceError("System must be quantum.")
+
+        g = self.to_transfer_function()
+        j = j_matrix(g.shape[0])
+        s = Symbol('s')
+
+        from sympy import simplify, conjugate
+        cond1 = simplify(g.subs(s, -conjugate(s)).H * j * g - j)
+        if cond1 != Matrix.zeros(*j.shape):
+            raise StateSpaceError(f"{cond1} != 0")
+
+        cond2 = simplify(self.d * j * self.d.H - j)
+        if cond2 != Matrix.zeros(*j.shape):
+            raise StateSpaceError(f"{cond2} != 0")
+
+    def to_skr(self):
+        """
+        Convert state space to SLH form as discussed in [synthesis]_, specifically returning the matrices
+        :math:`(S, K, R)`.
+        Assume physically realisable but won't error if it's not.
+
+        Raise `StateSpaceError` if system is not quantum.
+        """
+        if not self.quantum:
+            raise StateSpaceError("System must be quantum.")
+        from sympy import I, Rational
+        j = j_matrix(self.num_degrees_of_freedom)
+        SKR = namedtuple('SKR', ['s', 'k', 'r'])
+        return SKR(self.d, self.d**-1 * self.c, I * Rational(1, 4) * (j * self.a - self.a.H * j))
+
+    def to_slh(self, symbol):
+        """Create `StateSpace.to_skr` returning a `SLH` object using given symbol name ``symbol``."""
+        s, k, r = self.to_skr()
+        x0 = make_complex_ladder_state(r.shape[0] // 2, symbol)
+        return SLH(s, k, r, x0)
 
     @property
     def num_degrees_of_freedom(self):
