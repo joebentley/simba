@@ -555,7 +555,7 @@ def concat(a, b):
 
     .. math::
         G_1 \boxplus G_2 = \left(S_{1\boxplus2}, (K_1x_{1,0},K_2x_{2,0})^T,
-        \frac{1}{2} x_{1,0}^\dag R_2 x_{1,0}+\frac{1}{2} x_{2,0}^\dag R_2 x_{2,0}\right)
+        \frac{1}{2} x_{1,0}^\dag R_2 x_{1,0}+\frac{1}{2} x_{2,0}^\dag R_2 x_{2,0}\right),
 
     where,
 
@@ -576,7 +576,22 @@ def concat(a, b):
 
 
 def series(g_to, g_from):
-    """Series product representing"""
+    r"""
+    Series product representing the feeding of the output of ``g_from`` into the input of ``g_to``. The arguments
+    are in this order to match the notation below. The generalised open oscillators :math:`G_1` and :math:`G_2` are as
+    defined in `concat`.
+
+    The series product is then defined as,
+
+    .. math::
+        G_2 \triangleleft G_1 = \bigg(&S_2S_1, K_2x_{2,0} + S_2 K_1x_{1,0}, \\
+        &\frac{1}{2} x_{1,0}^\dag R_1 x_{1,0} + \frac{1}{2} x_{2,0}^\dag R_2 x_{2,0}
+        + \frac{1}{2i} x_{2,0}^\dag (K_2^\dag S_2 K_1 - K_2^T S_2^* K_1^*) x_{1,0}\bigg).
+
+    :param g_from: `SLH` object representing generalised open oscillator :math:`G_1`
+    :param g_to: `SLH` object representing generalised open oscillator :math:`G_2`
+    :return: `SLH` object representing concatenation of both
+    """
 
 
 class SLH:

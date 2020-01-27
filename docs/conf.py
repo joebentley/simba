@@ -65,9 +65,11 @@ imgmath_image_format = 'svg'
 imgmath_font_size = 14
 imgmath_latex_preamble = r"\usepackage{amssymb}"
 
+# autodoc settings
+autodoc_member_order = 'bysource'
+
 # set the default role
 default_role = 'any'
-
 
 # make sure that we don't skip documenting these special cases
 do_not_skip = ["__eq__", "__iter__", "__str__"]
