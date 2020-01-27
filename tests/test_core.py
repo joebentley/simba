@@ -83,8 +83,14 @@ def test_unstable_filter_realisation():
     assert StateSpace(a, b, c, d, quantum=True).is_physically_realisable,\
         "Unstable filter state-space should be realisable"
 
+    # transform to physically realisable
     ss_2 = ss.to_physically_realisable()
     assert ss_2.is_physically_realisable, "Result should be physically realisable"
+
+    s, k, r = ss_2.to_skr()
+    assert s == Matrix.eye(2), "Expected identity scattering matrix"
+    assert abs(k) == Matrix([[0, 2], [2, 0]]), "Did not get expected coupling matrix"
+    assert r == Matrix.zeros(2), "Expected zero Hamiltonian matrix"
 
 
 def test_unrealisable_transfer_function_should_raise_error():
@@ -133,5 +139,13 @@ def test_reordering_to_paired_form():
     assert d == Matrix([[4, 0, 5, 0], [0, 4, 0, 5], [6, 0, 7, 0], [0, 6, 0, 7]])
 
 
-# def test_concatenation_product():
-#     S, L, H
+def test_concatenation_product():
+    s, a, b = symbols('s a b')
+    tf = (s - 2) / (s + 2)
+    system = transfer_function_to_state_space(tf).extended_to_quantum().to_physically_realisable()
+    g_a, g_b = system.to_slh(a), system.to_slh(b)
+    g_ab = concat(g_a, g_b)
+
+    assert g_ab.s == Matrix.eye(4), "Expected identity scattering matrix"
+    assert g_ab.k == Matrix.diag(g_a.k, g_a.k), "Expected block diagonal coupling matrix"
+    assert g_ab.r == Matrix.zeros(4), "Expected zero Hamiltonian matrix"

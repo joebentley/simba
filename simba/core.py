@@ -1,6 +1,6 @@
 from copy import deepcopy
 from collections import namedtuple
-from sympy import Matrix, BlockDiagMatrix, Symbol, fraction, ImmutableMatrix, MatrixSymbol
+from sympy import Matrix, Symbol, fraction, ImmutableMatrix, MatrixSymbol
 from simba.utils import halve_matrix, solve_matrix_eqn
 from simba.errors import DimensionError, CoefficientError, StateSpaceError, ResultError
 from functools import lru_cache
@@ -133,6 +133,8 @@ class StateSpace:
 
         Reference: https://www.engr.mun.ca/~millan/Eng6825/canonicals.pdf
 
+        TODO: implement for arbitrary (quantum) transfer matrix with off-diagonal elements
+
         :param numer: The numerator coefficients: :math:`[b_n, \dots, b_0]`
         :param denom: The denominator coefficients: :math:`[a_n, \dots, a_1]`
 
@@ -184,10 +186,10 @@ class StateSpace:
         quantum_ss = deepcopy(self)
 
         quantum_ss.quantum = True
-        quantum_ss.a = ImmutableMatrix(BlockDiagMatrix(self.a, self.a.C))
-        quantum_ss.b = ImmutableMatrix(BlockDiagMatrix(self.b, self.b.C))
-        quantum_ss.c = ImmutableMatrix(BlockDiagMatrix(self.c, self.c.C))
-        quantum_ss.d = ImmutableMatrix(BlockDiagMatrix(self.d, self.d.C))
+        quantum_ss.a = ImmutableMatrix(Matrix.diag(self.a, self.a.C))
+        quantum_ss.b = ImmutableMatrix(Matrix.diag(self.b, self.b.C))
+        quantum_ss.c = ImmutableMatrix(Matrix.diag(self.c, self.c.C))
+        quantum_ss.d = ImmutableMatrix(Matrix.diag(self.d, self.d.C))
         return quantum_ss
 
     def truncated_to_classical(self):
@@ -396,7 +398,7 @@ class StateSpace:
     def raise_error_if_not_possible_to_realise(self):
         r"""
         Raises `StateSpaceError` if system cannot be physically realised according to the conditions given in
-        `is_transfer_function_realisable`.
+        `is_transfer_matrix_physically_realisable`.
 
         *Note* this does not imply that the system matrices :math:`(A, B, C, D)` are physically realisable, just that
         they can be transformed to a physically realisable form.
@@ -544,35 +546,61 @@ def transfer_function_to_coeffs(expr):
 
 
 def concat(a, b):
-    """Concatenate two `SLH` systems using the concatenation product. [synthesis]_"""
-    s = Matrix(BlockDiagMatrix(a.s, b.s))
-    # x0 = Matrix(a.x0
-    # return SLH(s, )
+    r"""
+    Concatenate two `SLH` systems using the concatenation product. [synthesis]_
+
+    Let :math:`G_1 = (S_1, K_1 x_{1,0}, \frac{1}{2} x_{1,0}^\dag R_2 x_{1,0}`) and
+    :math:`G_2 = (S_2, K_2 x_{2,0}, \frac{1}{2} x_{2,0}^\dag R_2 x_{2,0})`, where :math:`x_{k,0} \equiv x_k(t=0)`.
+    Then the concatenation product is defined as,
+
+    .. math::
+        G_1 \boxplus G_2 = \left(S_{1\boxplus2}, (K_1x_{1,0},K_2x_{2,0})^T,
+        \frac{1}{2} x_{1,0}^\dag R_2 x_{1,0}+\frac{1}{2} x_{2,0}^\dag R_2 x_{2,0}\right)
+
+    where,
+
+    .. math::
+        S_{1\boxplus2} = \begin{bmatrix}S_1 & 0 \\ 0 & S_2\end{bmatrix}.
+
+    *For simplicity we assume the system's share no degrees of freedom*, i.e. :math:`x_{1,0} \neq x_{2,0}`.
+
+    :param a: `SLH` object representing generalised open oscillator :math:`G_1`
+    :param b: `SLH` object representing generalised open oscillator :math:`G_2`
+    :return: `SLH` object representing concatenation of both
+    """
+    s = Matrix.diag(a.s, b.s)
+    k = Matrix.diag(a.k, b.k)
+    r = Matrix.diag(a.r, b.r)
+    x0 = Matrix([a.x0, b.x0])
+    return SLH(s, k, r, x0)
+
+
+def series(g_to, g_from):
+    """Series product representing"""
 
 
 class SLH:
     """
     Represents a generalised open oscillator in the SLH formalism. [synthesis]_
 
-    Attributes:
+    Attributes: (all stored as sympy ``ImmutableMatrix`` objects)
         - ``s``: scattering matrix
         - ``k``: linear coupling matrix
         - ``r``: internal system Hamiltonian matrix
-        - ``x0``: system state Symbols
+        - ``x0``: vector of system state Symbols
     """
 
     def __init__(self, s, k, r, x0):
         """Construct generalised open oscillator :math:`G = (S, L, H)`."""
-        self.s = s
-        self.k = k
-        self.r = r
-        self.x0 = x0
+        self.s = ImmutableMatrix(s)
+        self.k = ImmutableMatrix(k)
+        self.r = ImmutableMatrix(r)
+        self.x0 = ImmutableMatrix(x0)
 
     def _repr_latex_(self):
         """Display `SLH` in Jupyter notebook as LaTeX."""
         from sympy.printing.latex import latex
 
-        s_latex_string = None
         # check if S is identity, if so display identity matrix instead
         n = self.s.shape[0]
         if self.s == Matrix.eye(n):

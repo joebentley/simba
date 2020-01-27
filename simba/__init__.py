@@ -5,5 +5,5 @@ from simba.core import \
     (is_transfer_matrix_physically_realisable,
      transfer_func_coeffs_to_state_space, transfer_function_to_state_space,
      transfer_function_to_coeffs, StateSpace,
-     SLH)
+     concat, SLH)
 from simba.errors import DimensionError, CoefficientError, StateSpaceError

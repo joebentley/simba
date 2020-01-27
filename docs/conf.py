@@ -63,6 +63,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 # imgmath settings
 imgmath_image_format = 'svg'
 imgmath_font_size = 14
+imgmath_latex_preamble = r"\usepackage{amssymb}"
 
 # set the default role
 default_role = 'any'
