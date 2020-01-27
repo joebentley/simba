@@ -11,6 +11,7 @@ dependencies:
   - pytest
   - jupyter
   - jupyterlab
+  - jupyter_console
   - pip:
     - ply==3.11
     - pyx==0.15
