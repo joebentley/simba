@@ -64,3 +64,7 @@ References
 .. [synthesis]
     |br|
     Nurdin, Hendra I., Matthew R. James, and Andrew C. Doherty. "Network Synthesis of Linear Dynamical Quantum Stochastic Systems." SIAM Journal on Control and Optimization 48.4 (2009): 2686–2718. Crossref. Web. https://arxiv.org/abs/0806.4448
+
+.. [transfer-function]
+    |br|
+    A. J. Shaiju and I. R. Petersen, "A Frequency Domain Condition for the Physical Realizability of Linear Quantum Systems," in IEEE Transactions on Automatic Control, vol. 57, no. 8, pp. 2033-2044, Aug. 2012. https://doi.org/10.1109/TAC.2012.2195929

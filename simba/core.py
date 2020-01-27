@@ -9,6 +9,31 @@ from functools import lru_cache
 """State-spaces and transfer functions"""
 
 
+def is_transfer_matrix_physically_realisable(expr, d_matrix=None):
+    r"""
+    Check if transfer matrix :math:`\mathbf{G}(s)` given by ``expr`` and direct-feed matrix ``d_matrix``
+    is possible to physically realise by the conditions given in [transfer-function]_, i.e. that it obeys,
+
+    .. math::
+        \mathbf{G}^\sim(s) J \mathbf{G}(s) = J,\ \ D J D^\dagger = J,
+
+    where :math:`\mathbf{G}^\sim(s) \equiv \mathbf{G}^\dag(-s^*)`.
+
+    :param expr: a sympy Matrix representing the transfer Matrix :math:`\mathbf{G}(s)`
+    :param d_matrix: a sympy Matrix representing the direct-feed Matrix, defaulting to the identity matrix
+    """
+    j = j_matrix(expr.shape[0])
+    if not d_matrix:
+        d_matrix = Matrix.eye(*j.shape)
+
+    s = Symbol('s')
+    from sympy import simplify, conjugate
+    cond1 = simplify(expr.subs(s, -conjugate(s)).H * j * expr - j) == Matrix.zeros(*j.shape)
+    cond2 = simplify(d_matrix * j * d_matrix.H - j) == Matrix.zeros(*j.shape)
+
+    return cond1 and cond2
+
+
 def transfer_func_coeffs_to_state_space(numer, denom):
     """See `StateSpace.from_transfer_function_coeffs`."""
     return StateSpace.from_transfer_function_coeffs(numer, denom)
@@ -370,13 +395,8 @@ class StateSpace:
 
     def raise_error_if_not_possible_to_realise(self):
         r"""
-        Raises `StateSpaceError` if system cannot be physically realised according to the conditions,
-
-        .. math::
-            \mathbf{G}^\sim(s) J \mathbf{G}(s) = J,\ \ D J D^\dagger = J,
-
-        where :math:`\mathbf{G}(s)` is the system's transfer matrix (returned by `StateSpace.to_transfer_function`),
-        and :math:`\mathbf{G}^\sim(s) \equiv \mathbf{G}^\dag(-s^*)`.
+        Raises `StateSpaceError` if system cannot be physically realised according to the conditions given in
+        `is_transfer_function_realisable`.
 
         *Note* this does not imply that the system matrices :math:`(A, B, C, D)` are physically realisable, just that
         they can be transformed to a physically realisable form.

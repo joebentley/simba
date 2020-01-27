@@ -89,9 +89,12 @@ def test_unstable_filter_realisation():
 
 def test_unrealisable_transfer_function_should_raise_error():
     s = symbols('s')
-    ss = transfer_function_to_state_space((s + I) / (s - I))
+    g = (s + I) / (s - I)
+    ss = transfer_function_to_state_space(g)
     with pytest.raises(StateSpaceError):
         ss.find_transformation_to_physically_realisable()
+
+    assert not is_transfer_matrix_physically_realisable(g * Matrix.eye(2))
 
 
 def test_state_space_to_transfer_function_for_quantum_system():
