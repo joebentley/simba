@@ -232,6 +232,8 @@ class StateSpace:
         TODO: needs a bit of testing
 
         Raise `StateSpaceError` if system is not quantum or if system is not possible to physically realise.
+
+        Raise `ResultError` if there was some other unexpected error during finding T.
         """
         if not self.quantum:
             raise StateSpaceError("System must be quantum.")
