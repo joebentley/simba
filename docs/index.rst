@@ -6,6 +6,8 @@ SImBA - Systematic Inference of Bosonic quAntum systems
 
 .. |github link| image:: https://img.shields.io/badge/github-joebentley%2Fsimba-brightgreen
    :target: https://github.com/joebentley/simba
+.. |pypi| image:: https://img.shields.io/badge/pypi-quantum--simba-brightgreen
+   :target: https://pypi.org/project/quantum-simba/
 .. |CI status| image:: https://github.com/joebentley/simba/workflows/Python%20application/badge.svg
    :target: https://github.com/joebentley/simba/actions
 .. |License: MIT| image:: https://img.shields.io/badge/License-MIT-yellow.svg
