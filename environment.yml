@@ -13,8 +13,5 @@ dependencies:
   - jupyterlab
   - jupyter_console
   - pip:
-    - ply==3.11
+      # - ply==3.11
     - pyx==0.15
-    - qutip==4.4.1
-    - qnet==1.4.3
-    - six

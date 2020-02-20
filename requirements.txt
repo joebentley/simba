@@ -2,7 +2,7 @@ numpy
 scipy
 sympy
 #ply==3.11
-#pyx==0.15
+pyx==0.15
 #cython
 #qutip==4.4.1
 #qnet==1.4.3
