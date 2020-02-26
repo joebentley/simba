@@ -1,3 +1,4 @@
+
 from copy import deepcopy
 from collections import namedtuple
 from sympy import Matrix, Symbol, fraction, ImmutableMatrix, MatrixSymbol
@@ -46,12 +47,12 @@ def transfer_function_to_state_space(expr):
 
 def transfer_function_to_realisable_state_space(expr):
     """Convert given transfer function to physically realisable state space if possible."""
-    return transfer_function_to_state_space(expr).extended_to_quantum().to_physically_realisable()
+    return transfer_function_to_state_space(expr).to_physically_realisable()
 
 
 class StateSpace:
     r"""
-    Represents a dynamical state-space which describes the time-domain evolution of a system.
+    Represents a dynamical quantum state-space which describes the time-domain evolution of a system.
 
     .. math::
         \dot{x} &= a x + b u, \\
@@ -83,13 +84,12 @@ class StateSpace:
          - b:     Input coupling
          - c:     Internal coupling to output
          - d:     Direct-feed (input to output)
-         - quantum:  Whether or not system is quantum.
          - paired_operator_form:  Whether or not system is in `paired operator form`.
 
     Note that the matrices are stored using ``sympy.ImmutableMatrix``, and so are immutable. New StateSpaces should
     be created from modified matrices instead.
     """
-    def __init__(self, a, b, c, d, *, quantum=False, paired_operator_form=False):
+    def __init__(self, a, b, c, d, *, paired_operator_form=False):
         self.a = ImmutableMatrix(a)
         self.b = ImmutableMatrix(b)
         self.c = ImmutableMatrix(c)
@@ -110,13 +110,12 @@ class StateSpace:
         if not lc == ld:
             raise DimensionError(f"Number of output channels for matrix c not equal to matrix d: {lc} != {ld}")
 
-        self.quantum = quantum  # used to remember whether system is extended to quantum state-space
         self.paired_operator_form = paired_operator_form  # set if the StateSpace is in `paired operator form`
 
     @classmethod
     def from_transfer_function_coeffs(cls, numer, denom):
         r"""
-        Return the *quantum* (see [#quantum]_) controllable canonical form state space for the given list of numerators
+        Return the `SISO` controllable canonical form state space for the given list of numerators
         and denominators of a pole-zero form transfer function, given in order of ascending powers, assuming complex
         ladder operators :math:`(a, a^\dagger)` are used.
 
@@ -133,7 +132,7 @@ class StateSpace:
 
         Reference: https://www.engr.mun.ca/~millan/Eng6825/canonicals.pdf
 
-        TODO: implement for arbitrary (quantum) transfer matrix with off-diagonal elements
+        TODO: implement for MIMO systems
 
         :param numer: The numerator coefficients: :math:`[b_n, \dots, b_0]`
         :param denom: The denominator coefficients: :math:`[a_n, \dots, a_1]`
@@ -173,16 +172,16 @@ class StateSpace:
         """Call `from_transfer_function_coeffs` passing the expression to `transfer_function_to_coeffs`."""
         return cls.from_transfer_function_coeffs(*transfer_function_to_coeffs(expr))
 
+    def to_transfer_function(self):
+        """Calculate transfer function matrix for the system using the convention given by [#laplace]_."""
+        s = Symbol('s')
+        return self.c * (-s * Matrix.eye(self.a.shape[0]) - self.a).inv() * self.b + self.d
+
     def extended_to_quantum(self):
         """
-        Extend to quantum state space to doubled-up ordering (see [#quantum]_).
+        Extend SISO state-space to quantum MIMO state space in doubled-up ordering (see [#quantum]_).
         Returns extended `StateSpace`. Does not modify original.
-
-        Raises `StateSpaceError` if already quantum.
         """
-        if self.quantum:
-            raise StateSpaceError("System is already quantum.")
-
         quantum_ss = deepcopy(self)
 
         quantum_ss.quantum = True
@@ -191,30 +190,6 @@ class StateSpace:
         quantum_ss.c = ImmutableMatrix(Matrix.diag(self.c, self.c.C))
         quantum_ss.d = ImmutableMatrix(Matrix.diag(self.d, self.d.C))
         return quantum_ss
-
-    def truncated_to_classical(self):
-        """
-        Truncate to classical state space from doubled-up ordered state-space (see [#quantum]_).
-        Returns truncated `StateSpace`. Does not modify original.
-
-        Raises `StateSpaceError` if not quantum.
-        """
-        if not self.quantum:
-            raise StateSpaceError("System is not quantum.")
-
-        classical_ss = deepcopy(self)
-
-        classical_ss.quantum = False
-        classical_ss.a = halve_matrix(self.a)
-        classical_ss.b = halve_matrix(self.b)
-        classical_ss.c = halve_matrix(self.c)
-        classical_ss.d = halve_matrix(self.d)
-        return classical_ss
-
-    def to_transfer_function(self):
-        """Calculate transfer function matrix for the system using the convention given by [#laplace]_."""
-        s = Symbol('s')
-        return self.c * (-s * Matrix.eye(self.a.shape[0]) - self.a).inv() * self.b + self.d
 
     @lru_cache()
     def reorder_to_paired_form(self):
@@ -230,19 +205,17 @@ class StateSpace:
         .. math::
             (a_1, a_1^\dagger; a_2, a_2^\dagger; \dots; a_n, a_n^\dagger)^T,
 
-        Raise `StateSpaceError` if not quantum.
 
         Result with be cached using ``functools.lru_cache``, so subsequent calls should be "free".
 
         :return: StateSpace in paired up form.
         """
-        if not self.quantum:
-            raise StateSpaceError("StateSpace must be quantum.")
-        # (1, 2, 3, 11, 22, 33) -> (1, 11, 2, 22, 3, 33)
         n = self.num_degrees_of_freedom
-        assert n % 2 == 0, "num_degrees_of_freedom should be even for a quantum system"
+        if n % 2 != 0:
+            raise DimensionError("num_degrees_of_freedom should be even for a quantum system")
 
         # construct the transformation matrix that reorders the elements
+        # e.g. (1, 2, 3, 11, 22, 33) -> (1, 11, 2, 22, 3, 33)
         u = Matrix.zeros(n, n)
         for x in range(n // 2):
             u[x * 2, x] = 1
@@ -258,12 +231,13 @@ class StateSpace:
 
         TODO: needs a bit of testing
 
-        Raise `StateSpaceError` if system is not quantum or if system is not possible to physically realise.
+        Raise `StateSpaceError` if system is not possible to physically realise.
 
         Raise `ResultError` if there was some other unexpected error during finding T.
         """
-        if not self.quantum:
-            raise StateSpaceError("System must be quantum.")
+        n = self.num_degrees_of_freedom
+        if n % 2 != 0:
+            raise DimensionError("num_degrees_of_freedom should be even for a quantum system")
 
         self.raise_error_if_not_possible_to_realise()
 
@@ -357,8 +331,12 @@ class StateSpace:
 
         Transforms to `paired operator form` first if needed.
 
-        Raise `StateSpaceError` if system is not quantum.
+        Raise `DimensionError` if system does not have even number of degrees of freedom.
         """
+        n = self.num_degrees_of_freedom
+        if n % 2 != 0:
+            raise DimensionError("num_degrees_of_freedom should be even for a quantum system")
+
         if self.is_physically_realisable:
             return self
 
@@ -368,7 +346,7 @@ class StateSpace:
         b = t**-1 * b
         c = c * t
         d = d
-        ss = StateSpace(a, b, c, d, quantum=True, paired_operator_form=True)
+        ss = StateSpace(a, b, c, d, paired_operator_form=True)
         assert ss.is_physically_realisable, "Result was not physically realisable!"
         return ss
 
@@ -380,12 +358,7 @@ class StateSpace:
         .. math::
             AJ + JA^\dagger + BJB^\dagger &= 0, \\
             JC^\dagger + BJD^\dagger &= 0.
-
-        Raise `StateSpaceError` if system is not quantum.
         """
-        if not self.quantum:
-            raise StateSpaceError("System must be quantum.")
-
         # reorder to paired operator form only if needed
         ss = self if self.paired_operator_form else self.reorder_to_paired_form()
         j = j_matrix(ss.num_degrees_of_freedom)
@@ -402,12 +375,7 @@ class StateSpace:
 
         *Note* this does not imply that the system matrices :math:`(A, B, C, D)` are physically realisable, just that
         they can be transformed to a physically realisable form.
-
-        Raise `StateSpaceError` if system is not quantum.
         """
-        if not self.quantum:
-            raise StateSpaceError("System must be quantum.")
-
         g = self.to_transfer_function()
         j = j_matrix(g.shape[0])
         s = Symbol('s')
@@ -426,11 +394,7 @@ class StateSpace:
         Convert state space to SLH form as discussed in [synthesis]_, specifically returning the matrices
         :math:`(S, K, R)`.
         Assume physically realisable but won't error if it's not.
-
-        Raise `StateSpaceError` if system is not quantum.
         """
-        if not self.quantum:
-            raise StateSpaceError("System must be quantum.")
         from sympy import I, Rational
         j = j_matrix(self.num_degrees_of_freedom)
         SKR = namedtuple('SKR', ['s', 'k', 'r'])
@@ -498,7 +462,7 @@ def j_matrix(num_dof):
     Raises ``ValueError`` if num_dof is not even.
     """
     if num_dof % 2 != 0:
-        raise ValueError("num_dof should be even for a quantum system")
+        raise DimensionError("num_dof should be even for a quantum system")
     return Matrix.diag([1, -1] * (num_dof // 2))
 
 

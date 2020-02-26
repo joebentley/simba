@@ -27,6 +27,7 @@ of linear quantum dynamical systems directly from frequency-domain transfer func
     modules/core
     modules/utils
     modules/errors
+    modules/graph
 
 Indices and tables
 ==================

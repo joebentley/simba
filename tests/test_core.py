@@ -80,7 +80,7 @@ def test_unstable_filter_realisation():
     b = 2 * Matrix([[0, 1], [-1, 0]])
     c = 2 * Matrix([[0, -1], [1, 0]])
     d = Matrix.eye(2)
-    assert StateSpace(a, b, c, d, quantum=True).is_physically_realisable,\
+    assert StateSpace(a, b, c, d).is_physically_realisable,\
         "Unstable filter state-space should be realisable"
 
     # transform to physically realisable
@@ -96,7 +96,7 @@ def test_unstable_filter_realisation():
 def test_unrealisable_transfer_function_should_raise_error():
     s = symbols('s')
     g = (s + I) / (s - I)
-    ss = transfer_function_to_state_space(g)
+    ss = transfer_function_to_state_space(g).extended_to_quantum()
     with pytest.raises(StateSpaceError):
         ss.find_transformation_to_physically_realisable()
 
@@ -116,14 +116,6 @@ def test_extending_to_quantum_state_space():
     ss = ss.extended_to_quantum()
     assert ss.a == Matrix.diag(1 + I, 1 - I)
     assert ss.c == Matrix.eye(2) * 3
-
-    with pytest.raises(StateSpaceError):  # should raise error if already quantum
-        ss.extended_to_quantum()
-
-
-def test_truncating_to_classical_state_space():
-    ss = StateSpace(Matrix([1 + I]), Matrix([2]), Matrix([3]), Matrix([4]))
-    assert ss.extended_to_quantum().truncated_to_classical() == ss
 
 
 def test_reordering_to_paired_form():
