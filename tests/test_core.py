@@ -103,6 +103,12 @@ def test_unrealisable_transfer_function_should_raise_error():
     assert not is_transfer_matrix_physically_realisable(g * Matrix.eye(2))
 
 
+def test_finding_2_dof_realisation():
+    s = symbols('s')
+    tf = (s**2 + s + 1) / (s**2 - s + 1)
+    ss = transfer_function_to_state_space(tf).extended_to_quantum().to_physically_realisable()
+
+
 def test_state_space_to_transfer_function_for_quantum_system():
     s = symbols('s')
     tf_expected = (s - 2) / (s + 2)

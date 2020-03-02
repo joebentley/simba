@@ -2,7 +2,7 @@
 from copy import deepcopy
 from collections import namedtuple
 from sympy import Matrix, Symbol, fraction, ImmutableMatrix, MatrixSymbol
-from simba.utils import halve_matrix, solve_matrix_eqn
+from simba.utils import solve_matrix_eqn, construct_transformation_matrix
 from simba.errors import DimensionError, CoefficientError, StateSpaceError, ResultError
 from functools import lru_cache
 
@@ -216,13 +216,14 @@ class StateSpace:
 
         # construct the transformation matrix that reorders the elements
         # e.g. (1, 2, 3, 11, 22, 33) -> (1, 11, 2, 22, 3, 33)
-        u = Matrix.zeros(n, n)
-        for x in range(n // 2):
-            u[x * 2, x] = 1
-            u[x * 2 + 1, x + n // 2] = 1
+        u = construct_transformation_matrix(n)
+
+        # construct the matrices for the inputs and outputs
+        u_i = construct_transformation_matrix(self.num_inputs)
+        u_o = construct_transformation_matrix(self.num_outputs)
 
         # apply transformation and return
-        return StateSpace(u*self.a*u.inv(), u*self.b*u.inv(), u*self.c*u.inv(), u*self.d*u.inv(),
+        return StateSpace(u*self.a*u.inv(), u*self.b*u_i.inv(), u_o*self.c*u.inv(), u_o*self.d*u_i.inv(),
                           paired_operator_form=True)
 
     def find_transformation_to_physically_realisable(self):
@@ -247,8 +248,9 @@ class StateSpace:
 
         # solve for x in both physical realisability equations
         j = j_matrix(self.num_degrees_of_freedom)
+        j_i = j_matrix(self.num_inputs)
         x = MatrixSymbol('X', *j.shape)
-        sol = solve_matrix_eqn([a * x + x * a.H + b * j * b.H, x * c.H + b * j * d.H], x)
+        sol = solve_matrix_eqn([a * x + x * a.H + b * j_i * b.H, x * c.H + b * j_i * d.H], x)
         if len(sol) != 1:
             raise ResultError("Expected one and exactly one result.")
 
@@ -362,8 +364,9 @@ class StateSpace:
         # reorder to paired operator form only if needed
         ss = self if self.paired_operator_form else self.reorder_to_paired_form()
         j = j_matrix(ss.num_degrees_of_freedom)
-        realisability1 = ss.a * j + j * ss.a.H + ss.b * j * ss.b.H
-        realisability2 = j * ss.c.H + ss.b * j * ss.d.H
+        j_i = j_matrix(ss.num_inputs)
+        realisability1 = ss.a * j + j * ss.a.H + ss.b * j_i * ss.b.H
+        realisability2 = j * ss.c.H + ss.b * j_i * ss.d.H
         cond1 = realisability1 == Matrix.zeros(*realisability1.shape)
         cond2 = realisability2 == Matrix.zeros(*realisability2.shape)
         return cond1 and cond2
@@ -385,6 +388,7 @@ class StateSpace:
         if cond1 != Matrix.zeros(*j.shape):
             raise StateSpaceError(f"{cond1} != 0")
 
+        j = j_matrix(self.d.shape[1])
         cond2 = simplify(self.d * j * self.d.H - j)
         if cond2 != Matrix.zeros(*j.shape):
             raise StateSpaceError(f"{cond2} != 0")
@@ -437,8 +441,7 @@ class StateSpace:
 
     def __eq__(self, other):
         """Equality for state spaces means that all the ABCD matrices are equal and both are or aren't quantum."""
-        return self.a == other.a and self.b == other.b and self.c == other.c and self.d == other.d and \
-            self.quantum == other.quantum
+        return self.a == other.a and self.b == other.b and self.c == other.c and self.d == other.d
 
     def __str__(self):
         """Prettify the equation."""

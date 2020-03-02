@@ -32,3 +32,15 @@ def solve_matrix_eqn(eqn, x):
 
     sols = linsolve(eqns, list(x))
     return list(map(lambda sol: Matrix(sol).reshape(*x.shape), sols))
+
+
+def construct_transformation_matrix(n):
+    """Construct permutation matrix that reorders the elements so that (1, 2, 3, 11, 22, 33) -> (1, 11, 2, 22, 3, 33)"""
+    if n % 2 != 0:
+        raise DimensionError("n should be even")
+
+    u = Matrix.zeros(n, n)
+    for x in range(n // 2):
+        u[x * 2, x] = 1
+        u[x * 2 + 1, x + n // 2] = 1
+    return u
