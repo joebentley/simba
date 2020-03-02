@@ -108,6 +108,13 @@ def test_finding_2_dof_realisation():
     tf = (s**2 + s + 1) / (s**2 - s + 1)
     ss = transfer_function_to_state_space(tf).extended_to_quantum().to_physically_realisable()
 
+    # FIXME: not recovering same transfer function (it recovers (s**2 + s - 1) / (s**2 - s - 1))
+    # assert simplify(ss.to_transfer_function()[0, 0] - tf) == 0
+
+    # FIXME: not constructing something physically realisable
+    # tf = (s**2 + s - 1) / (s**2 - s - 1)
+    # transfer_function_to_state_space(tf).extended_to_quantum().to_physically_realisable()
+
 
 def test_state_space_to_transfer_function_for_quantum_system():
     s = symbols('s')
