@@ -16,9 +16,9 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        # qutip's setup.py already expects a few packages to be installed
         pip install numpy
         pip install scipy
+        pip install sympy
 #        pip install -r requirements.txt
     - name: Lint with flake8
       run: |
