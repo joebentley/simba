@@ -1,7 +1,7 @@
 
 from copy import deepcopy
 from collections import namedtuple
-from sympy import Matrix, Symbol, fraction, ImmutableMatrix, MatrixSymbol
+from sympy import Matrix, Symbol, fraction, ImmutableMatrix, MatrixSymbol, I
 from simba.utils import solve_matrix_eqn, construct_transformation_matrix
 from simba.errors import DimensionError, CoefficientError, StateSpaceError, ResultError
 from functools import lru_cache
@@ -695,12 +695,39 @@ def make_complex_ladder_state(num_dofs, symbol='a'):
 """Network Synthesis"""
 
 
-def split_two_dof(open_osc):
+def split_two_dof(open_osc: SLH):
     r"""
     Split a two dof generalised open oscillator :math:`G` into two one dof generalised open oscillators
     :math:`(G_1, G_2)` which are connected in series and coupled by direct interaction Hamiltonian :math:`H^d_{1,2}`.
 
+    The resulting G_1 and G_2 are assigned Sympy symbols a_1 and a_2 respectively
+
     :param open_osc: an instance of `SLH` with two degrees of freedom (i.e. r-matrix is 4x4)
-    :returns tuple of :math:`(G_1, G_2, H^d_{1,2})`
+    :returns tuple of :math:`(G_1, G_2, H^d_{1,2})`, where :math:`H^d_{1,2}` is given as a matrix
     """
-    pass
+
+    if open_osc.r.shape != (4, 4) or open_osc.k.shape[1] != 4:
+        raise DimensionError("split_two_dof only works on generalised open oscillators with two degrees of freedom")
+
+    # get diagonal 2x2 block matrices of R
+    r_1 = open_osc.r[0:2, 0:2]
+    r_2 = open_osc.r[2:4, 2:4]
+
+    # get the two mx2 k matrices
+    k_1 = open_osc.k[0:2, 0:2]
+    k_2 = open_osc.k[0:2, 2:4]
+
+    # TODO: for now we assume no scattering for simplicity
+
+    r_12 = open_osc.r[2:4, 0:2]
+    r_21 = open_osc.r[0:2, 2:4]
+
+    h_d = Matrix.zeros(4, 4)
+
+    h_d[0:2, 2:4] = r_21 - 1 / (2*I) * (k_1.H * k_2 - k_1.T * k_2.C)
+    h_d[2:4, 0:2] = r_12 - 1 / (2*I) * (k_2.H * k_1 - k_2.T * k_1.C)
+
+    g_1 = SLH(Matrix.eye(2, 2), k_1, r_1, make_complex_ladder_state(1, 'a_1'))
+    g_2 = SLH(Matrix.eye(2, 2), k_2, r_2, make_complex_ladder_state(1, 'a_2'))
+
+    return g_1, g_2, h_d
