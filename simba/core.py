@@ -157,7 +157,7 @@ class StateSpace:
             a[n - 1, i] = +1 * denom_coeff  # would be -1 if used other Laplace convention (s -> -s)
 
         # construct c matrix
-        b_0 = b[-1]
+        b_0 = numer[-1]
         c = Matrix.zeros(1, n)
         for i, (a_i, b_i) in enumerate(zip(denom, numer)):
             c[0, i] = -1 * (b_i - a_i * b_0)  # would be +1 if other convention
@@ -691,3 +691,16 @@ def make_complex_ladder_state(num_dofs, symbol='a'):
 
     return Matrix(states)
 
+
+"""Network Synthesis"""
+
+
+def split_two_dof(open_osc):
+    r"""
+    Split a two dof generalised open oscillator :math:`G` into two one dof generalised open oscillators
+    :math:`(G_1, G_2)` which are connected in series and coupled by direct interaction Hamiltonian :math:`H^d_{1,2}`.
+
+    :param open_osc: an instance of `SLH` with two degrees of freedom (i.e. r-matrix is 4x4)
+    :returns tuple of :math:`(G_1, G_2, H^d_{1,2})`
+    """
+    pass
