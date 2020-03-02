@@ -23,4 +23,8 @@ print()
 print(h_d)
 print()
 
-print(simba.nodes_from_two_dofs(g_1, g_2, h_d))
+graph = simba.nodes_from_two_dofs(g_1, g_2, h_d).as_graphviz_agraph()
+
+graph.layout()
+graph.draw('example.pdf')
+print('wrote example.pdf')

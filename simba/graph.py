@@ -43,8 +43,8 @@ class Node:
         self.self_connections = set()
 
     def get_connections_to(self, index) -> set:
-        """Filter for *set* of connections to the `Node` with given index."""
-        return set(filter(lambda conn: conn.index == index, self.connections))
+        """Filter for *set* of `ConnectionType` to the `Node` with given index."""
+        return set(map(lambda conn: conn.connection_type, filter(lambda conn: conn.index == index, self.connections)))
 
     def __str__(self):
         self_conns_str = "-> self via "
@@ -59,6 +59,18 @@ class Node:
             connections_str += f"-> {connection.index} via {connection.connection_type}\n"
 
         return self_conns_str + '\n' + connections_str
+
+
+def _arrow_head_from_connections_set(connections):
+    """Determine arrowhead from set of `ConnectionType`."""
+    arrow_head = None
+    if ConnectionType.SQZ in connections and ConnectionType.BS in connections:
+        arrow_head = 'lodiamondrbox'
+    elif ConnectionType.BS in connections:
+        arrow_head = 'odiamond'
+    elif ConnectionType.SQZ in connections:
+        arrow_head = 'obox'
+    return arrow_head
 
 
 class Nodes:
@@ -76,6 +88,59 @@ class Nodes:
         for i, node in enumerate(self.nodes):
             s += f"node {i}\n{str(node)}"
         return s
+
+    def as_graphviz_agraph(self):
+        """Convert to a pygraphviz.AGraph object for display."""
+        import pygraphviz as pgv
+
+        g = pgv.AGraph(strict=False, directed=True)
+
+        for i, node in enumerate(self.nodes):
+            node_shape = 'circle'
+            if node.internal == Internal.TUNED:
+                node_shape = 'circle'
+            elif node.internal == Internal.DETUNED:
+                node_shape = 'ellipse'
+            elif node.internal == Internal.DPA:
+                node_shape = 'diamond'
+            elif node.internal == Internal.ALL:
+                node_shape = 'star'
+
+            g.add_node(str(i), shape=node_shape)
+
+            # determine self connection shapes
+            if len(node.self_connections) != 0:
+                g.add_node(f"{i}'", shape=node_shape)
+                g.add_node(str(i), shape='circle')  # reset main node shape
+
+                arrow_head = _arrow_head_from_connections_set(node.self_connections)
+
+                if arrow_head is not None:
+                    g.add_edge(str(i), f"{i}'", arrowtail=arrow_head, arrowhead=arrow_head, dir='both')
+
+        # add other connections between each node
+        for i, node in enumerate(self.nodes):
+            for other in range(i+1, len(self.nodes)):
+                connections = node.get_connections_to(other)
+
+                arrow_head = _arrow_head_from_connections_set(connections)
+
+                if arrow_head is not None:
+                    g.add_edge(str(i), str(other), 'interaction', arrowtail=arrow_head, arrowhead=arrow_head, dir='both')
+                    g.add_edge(str(other), str(i), 'interaction', arrowtail=arrow_head, arrowhead=arrow_head, dir='both')
+
+        # add series connection between each node
+        for i in range(0, len(self.nodes) - 1):
+            g.add_edge(str(i), str(i + 1), 'series', arrowtail='none', arrowhead='normal', dir='both')
+
+        # add input and output nodes
+        g.add_node('input', shape='plaintext')
+        g.add_node('output', shape='plaintext')
+
+        g.add_edge('input', '0')
+        g.add_edge(str(len(self.nodes) - 1), 'output')
+
+        return g
 
 
 def nodes_from_two_dofs(g_1, g_2, h_d):
@@ -112,7 +177,7 @@ def nodes_from_two_dofs(g_1, g_2, h_d):
     h_d = h_d[0:2, 2:4]
 
     # again can just look at one column as the interaction is symmetric
-    h_d = h_d[:, 0]
+    h_d = h_d[:, 0].T
 
     # TODO: check this more thoroughly
     if h_d[0] != 0:
@@ -123,3 +188,15 @@ def nodes_from_two_dofs(g_1, g_2, h_d):
         node_2.connections.append(Connection(0, ConnectionType.SQZ))
 
     return Nodes([node_1, node_2])
+
+
+def two_dof_transfer_function_to_graph(tf, filename):
+    """Directly convert two dof transfer function to graph."""
+    from simba import transfer_function_to_state_space, split_two_dof
+
+    ss = transfer_function_to_state_space(tf).extended_to_quantum().to_physically_realisable()
+
+    g = nodes_from_two_dofs(*split_two_dof(ss.to_slh('a'))).as_graphviz_agraph()
+    g.layout()
+    g.draw(filename)
+    print(f"wrote {filename}")
