@@ -343,13 +343,18 @@ class StateSpace:
         if self.is_physically_realisable:
             return self
 
-        t = self.find_transformation_to_physically_realisable()
+        # transform to paired operator form is needed
         a, b, c, d = self if self.paired_operator_form else self.reorder_to_paired_form()
+        ss = StateSpace(a, b, c, d, paired_operator_form=True)
+        t = ss.find_transformation_to_physically_realisable()
+
+        # apply transformation
         a = t**-1 * a * t
         b = t**-1 * b
         c = c * t
         d = d
         ss = StateSpace(a, b, c, d, paired_operator_form=True)
+
         assert ss.is_physically_realisable, "Result was not physically realisable!"
         return ss
 

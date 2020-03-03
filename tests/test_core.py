@@ -103,19 +103,12 @@ def test_unrealisable_transfer_function_should_raise_error():
     assert not is_transfer_matrix_physically_realisable(g * Matrix.eye(2))
 
 
-# def test_finding_2_dof_realisation():
-#     s = symbols('s')
-#     # cascade
-#     tf = (s + 1)**2 / (s - 1)**2
-    # ss = transfer_function_to_state_space(tf).extended_to_quantum().to_physically_realisable()
+def test_finding_2_dof_realisation():
+    s = symbols('s')
+    # cascade of two tuned cavities
+    tf = (s + 1)**2 / (s - 1)**2
 
-    # FIXME: not recovering same transfer function (it recovers (s**2 + s - 1) / (s**2 - s - 1))
-    # assert simplify(transfer_function_to_state_space(tf).to_transfer_function()[0,0] - tf) == 0
-    # assert simplify(ss.to_transfer_function()[0, 0] - tf) == 0
-
-    # FIXME: not constructing something physically realisable
-    # tf = (s**2 + s - 1) / (s**2 - s - 1)
-    # transfer_function_to_state_space(tf).extended_to_quantum().to_physically_realisable()
+    split_system(transfer_function_to_state_space(tf).extended_to_quantum().to_physically_realisable().to_slh())
 
 
 def test_recovering_transfer_function_for_cascade_realisation():
