@@ -386,12 +386,12 @@ class StateSpace:
         from sympy import simplify, conjugate
         cond1 = simplify(g.subs(s, -conjugate(s)).H * j * g - j)
         if cond1 != Matrix.zeros(*j.shape):
-            raise StateSpaceError(f"{cond1} != 0")
+            raise StateSpaceError(f"Not possible to realise: {cond1} != 0")
 
         j = j_matrix(self.d.shape[1])
         cond2 = simplify(self.d * j * self.d.H - j)
         if cond2 != Matrix.zeros(*j.shape):
-            raise StateSpaceError(f"{cond2} != 0")
+            raise StateSpaceError(f"Not possible to realise: {cond2} != 0")
 
     def to_skr(self):
         """
@@ -404,8 +404,8 @@ class StateSpace:
         SKR = namedtuple('SKR', ['s', 'k', 'r'])
         return SKR(self.d, self.d**-1 * self.c, I * Rational(1, 4) * (j * self.a - self.a.H * j))
 
-    def to_slh(self, symbol):
-        """Create `StateSpace.to_skr` returning a `SLH` object using given symbol name ``symbol``."""
+    def to_slh(self, symbol='a'):
+        """Create `StateSpace.to_skr` returning a `SLH` object using given symbol name ``symbol``, defaulting to 'a'."""
         s, k, r = self.to_skr()
         x0 = make_complex_ladder_state(r.shape[0] // 2, symbol)
         return SLH(s, k, r, x0)
@@ -693,6 +693,41 @@ def make_complex_ladder_state(num_dofs, symbol='a'):
 
 
 """Network Synthesis"""
+
+
+def split_system(open_osc: SLH):
+    """
+    Split n degree of freedom open oscillator into n one degree of freedom open oscillators and a direct interaction
+    Hamiltonian matrix.
+
+    :param open_osc:
+    :return: tuple of ([G_1, ..., G_n], H^d)
+    """
+    dof = open_osc.r.shape[0] // 2
+
+    if dof == 1:  # already separated
+        return [open_osc], Matrix.zeros(2, 2)
+
+    # get the list of 2x2 diagonal block matrices of R
+    r_blocks = list(map(lambda i: open_osc.r[i:(i+2), i:(i+2)], range(0, 2 * dof, 2)))
+    # get the list of mx2 k matrices
+    k_blocks = list(map(lambda i: open_osc.k[0:2, i:(i+2)], range(0, 2 * dof, 2)))
+
+    # construct the open oscillators
+    gs = list(map(lambda v: SLH(Matrix.eye(2, 2), v[1][0], v[1][1], make_complex_ladder_state(1, f'a_{v[0]}')),
+                  enumerate(zip(k_blocks, r_blocks))))
+
+    # TODO: for now we assume no scattering for simplicity
+
+    h_d = Matrix.zeros(dof * 2, dof * 2)
+
+    # construct Hamiltonian interaction matrix
+    for j in range(0, dof - 1):
+        for k in range(j + 1, dof):
+            h_d[(j*2):((j+1)*2), (k*2):((k+1)*2)] = open_osc.r[(k*2):((k+1)*2), (j*2):((j+1)*2)] \
+                - 1 / (2 * I) * (k_blocks[k].H * k_blocks[j] - k_blocks[k].T * k_blocks[j].C)
+
+    return gs, h_d
 
 
 def split_two_dof(open_osc: SLH):

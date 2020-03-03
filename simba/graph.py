@@ -143,6 +143,48 @@ class Nodes:
         return g
 
 
+def nodes_from_dofs(gs, h_d):
+    """
+    Construct the Node graph for an n degree-of-freedom generalised open oscillator
+    :param gs: list of n 1-dof generalised open oscillators
+    :param h_d: the direct interaction Hamiltonian matrix
+    :return: a `Nodes` instance
+    """
+
+    # TODO: distinguish between detuned cavity and tuned DPA
+
+    nodes = list(map(lambda g: Node(Internal.ALL if g.r != Matrix.zeros(2, 2) else Internal.TUNED), gs))
+
+    # now we figure out which self-connection we need
+    # only need to look at first column, as discussed by Hendra (2008) Section 6.3 https://arxiv.org/abs/0806.4448
+    for i, g in enumerate(gs):
+        self_conn = g.k[:, 0]
+        if self_conn[0] != 0:
+            nodes[i].self_connections.add(ConnectionType.BS)
+        if self_conn[1] != 0:
+            nodes[i].self_connections.add(ConnectionType.SQZ)
+
+    # figure out the connections to other matrices from the interaction Hamiltonian matrix
+    # it should be Hermitian and off-diagonal so we'll just look at the upper-right block
+    dof = len(gs)
+    for j in range(0, dof - 1):
+        for k in range(j + 1, dof):
+            h_d = h_d[(j*2):((j+1)*2), (k*2):((k+1)*2)]
+
+            # again can just look at one column as the interaction is symmetric
+            h_d = h_d[:, 0].T
+
+            # TODO: check this more thoroughly
+            if h_d[0] != 0:
+                nodes[j].connections.append(Connection(k, ConnectionType.BS))
+                nodes[k].connections.append(Connection(j, ConnectionType.BS))
+            if h_d[1] != 0:
+                nodes[k].connections.append(Connection(j, ConnectionType.SQZ))
+                nodes[j].connections.append(Connection(k, ConnectionType.SQZ))
+
+    return Nodes(nodes)
+
+
 def nodes_from_two_dofs(g_1, g_2, h_d):
     """
     Construct the Node graph for a two degree-of-freedom generalised open oscillator
@@ -165,7 +207,7 @@ def nodes_from_two_dofs(g_1, g_2, h_d):
     if self_conn_1[1] != 0:
         node_1.self_connections.add(ConnectionType.SQZ)
 
-    self_conn_2 = g_1.k[:, 0]
+    self_conn_2 = g_2.k[:, 0]
 
     if self_conn_2[0] != 0:
         node_2.self_connections.add(ConnectionType.BS)
@@ -196,7 +238,19 @@ def two_dof_transfer_function_to_graph(tf, filename):
 
     ss = transfer_function_to_state_space(tf).extended_to_quantum().to_physically_realisable()
 
-    g = nodes_from_two_dofs(*split_two_dof(ss.to_slh('a'))).as_graphviz_agraph()
+    g = nodes_from_two_dofs(*split_two_dof(ss.to_slh())).as_graphviz_agraph()
+    g.layout()
+    g.draw(filename)
+    print(f"wrote {filename}")
+
+
+def transfer_function_to_graph(tf, filename):
+    """Directly convert SISO transfer function to graph."""
+    from simba import transfer_function_to_state_space, split_system
+
+    ss = transfer_function_to_state_space(tf).extended_to_quantum().to_physically_realisable()
+
+    g = nodes_from_dofs(*split_system(ss.to_slh())).as_graphviz_agraph()
     g.layout()
     g.draw(filename)
     print(f"wrote {filename}")
