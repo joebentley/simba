@@ -154,13 +154,14 @@ class StateSpace:
         for i in range(0, n - 1):
             a[i, i + 1] = 1
         for i, denom_coeff in enumerate(denom):
-            a[n - 1, i] = +1 * denom_coeff  # would be -1 if used other Laplace convention (s -> -s)
+            a[n - 1, i] = -denom_coeff
 
         # construct c matrix
         b_0 = numer[-1]
+
         c = Matrix.zeros(1, n)
         for i, (a_i, b_i) in enumerate(zip(denom, numer)):
-            c[0, i] = -1 * (b_i - a_i * b_0)  # would be +1 if other convention
+            c[0, i] = b_i - a_i * b_0
 
         # construct d matrix
         d = Matrix([b_0])
@@ -469,7 +470,7 @@ def j_matrix(num_dof):
     return Matrix.diag([1, -1] * (num_dof // 2))
 
 
-def transfer_function_to_coeffs(expr):
+def transfer_function_to_coeffs(expr, flip_s=True):
     """
     Extract transfer function coefficients from the given expression which is a function of frequency :math:`s` and a
     ratio of two polynomials.
@@ -484,9 +485,13 @@ def transfer_function_to_coeffs(expr):
     The coefficients are normalised such that the coefficient of the highest order term in the denominator is one.
 
     :param expr: ratio of two polynomials in :math:`s`
+    :param flip_s: if True, set s to -s, that is use the Laplace convention defined in [#laplace]_
     :return: ``Coefficients`` namedtuple with fields: ``(numer=[b_n, ..., b_0], denom=[a_n, ..., a_1])``
     """
     s = Symbol('s')
+    if flip_s:
+        expr = expr.subs(s, -s)  # transform to our Laplace convention
+
     numers_and_denoms = tuple(map(lambda e: list(reversed(e.as_poly(s).all_coeffs())), fraction(expr)))
     numer_coeffs, denom_coeffs = numers_and_denoms
 
@@ -724,7 +729,7 @@ def split_system(open_osc: SLH):
     # construct Hamiltonian interaction matrix
     for j in range(0, dof - 1):
         for k in range(j + 1, dof):
-            h_d[(j*2):((j+1)*2), (k*2):((k+1)*2)] = open_osc.r[(k*2):((k+1)*2), (j*2):((j+1)*2)] \
+            h_d[(j*2):((j+1)*2), (k*2):((k+1)*2)] = open_osc.r[(k*2):((k+1)*2), (j*2):((j+1)*2)].H \
                 - 1 / (2 * I) * (k_blocks[k].H * k_blocks[j] - k_blocks[k].T * k_blocks[j].C)
 
     return gs, h_d
