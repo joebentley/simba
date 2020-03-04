@@ -1,11 +1,13 @@
 
 from copy import deepcopy
 from collections import namedtuple
-from sympy import Matrix, Symbol, fraction, ImmutableMatrix, MatrixSymbol, I
-from simba.utils import solve_matrix_eqn, construct_transformation_matrix
-from simba.errors import DimensionError, CoefficientError, StateSpaceError, ResultError
 from functools import lru_cache
 
+from sympy import Matrix, Symbol, fraction, ImmutableMatrix, MatrixSymbol, I
+
+from simba.utils import solve_matrix_eqn, construct_transformation_matrix, matrix_simplify
+from simba.errors import DimensionError, CoefficientError, StateSpaceError, ResultError
+import simba.config as config
 
 """State-spaces and transfer functions"""
 
@@ -243,7 +245,7 @@ class StateSpace:
 
         self.raise_error_if_not_possible_to_realise()
 
-        if self.is_physically_realisable:
+        if config.params['checks'] and self.is_physically_realisable:
             return Matrix.eye(self.num_degrees_of_freedom)
         a, b, c, d = self
 
@@ -262,9 +264,11 @@ class StateSpace:
         # diagonalise into X = P D P^\dagger where P is unitary via spectral theorem
         # i-th column of P is the i-th orthogonal eigenvector of X
         # i-th element of diagonal D is i-th real eigenvalue of X
-        p, d = x.diagonalize()
-        assert p.H == p**-1, "p should be unitary"
-        assert d.is_diagonal(), "d should be diagonal"
+        p, d = x.diagonalize(normalize=True)
+
+        if config.params['checks']:
+            assert matrix_simplify(p.H - p**-1) == Matrix.zeros(*p.shape), "p should be unitary"
+            assert d.is_diagonal(), "d should be diagonal"
         eigenvals = list(d.diagonal())
 
         # need to re-arrange to form X = T J T^\dagger
@@ -316,16 +320,17 @@ class StateSpace:
             "Eigenvalues still not in order!"
 
         # factor out the square root of each eigenvalue into the eigenvectors
-        from sympy import sqrt, simplify
+        from sympy import sqrt, radsimp
         scaled_evs = []
         for i, ev in enumerate(eigenvals):
             scale = abs(ev)
-            scaled_evs.append(simplify(ev / scale))
+            scaled_evs.append(radsimp(ev / scale))
             p[:, i] *= sqrt(scale)
 
-        assert Matrix.diag(scaled_evs) == j, "Scaled eigenvalues matrix not recovered!"
-        assert p * j * p.H == x, "Result not recovered as expected!"
-        return p
+        if config.params['checks']:
+            assert Matrix.diag(scaled_evs) == j, "Scaled eigenvalues matrix not recovered!"
+            assert matrix_simplify(p * j * p.H - x) == Matrix.zeros(*x.shape), "Result not recovered as expected!"
+        return matrix_simplify(p)
 
     def to_physically_realisable(self):
         """
@@ -340,22 +345,26 @@ class StateSpace:
         if n % 2 != 0:
             raise DimensionError("num_degrees_of_freedom should be even for a quantum system")
 
-        if self.is_physically_realisable:
-            return self
+        if config.params['checks']:
+            if self.is_physically_realisable:
+                return self
 
         # transform to paired operator form is needed
         a, b, c, d = self if self.paired_operator_form else self.reorder_to_paired_form()
         ss = StateSpace(a, b, c, d, paired_operator_form=True)
         t = ss.find_transformation_to_physically_realisable()
 
+        from sympy import simplify
+
         # apply transformation
-        a = t**-1 * a * t
-        b = t**-1 * b
-        c = c * t
-        d = d
+        a = simplify(t**-1 * a * t)
+        b = simplify(t**-1 * b)
+        c = simplify(c * t)
+        d = simplify(d)
         ss = StateSpace(a, b, c, d, paired_operator_form=True)
 
-        assert ss.is_physically_realisable, "Result was not physically realisable!"
+        if config.params['checks']:
+            assert ss.is_physically_realisable, "Result was not physically realisable!"
         return ss
 
     @property
@@ -371,10 +380,12 @@ class StateSpace:
         ss = self if self.paired_operator_form else self.reorder_to_paired_form()
         j = j_matrix(ss.num_degrees_of_freedom)
         j_i = j_matrix(ss.num_inputs)
+
         realisability1 = ss.a * j + j * ss.a.H + ss.b * j_i * ss.b.H
         realisability2 = j * ss.c.H + ss.b * j_i * ss.d.H
-        cond1 = realisability1 == Matrix.zeros(*realisability1.shape)
-        cond2 = realisability2 == Matrix.zeros(*realisability2.shape)
+
+        cond1 = matrix_simplify(realisability1) == Matrix.zeros(*realisability1.shape)
+        cond2 = matrix_simplify(realisability2) == Matrix.zeros(*realisability2.shape)
         return cond1 and cond2
 
     def raise_error_if_not_possible_to_realise(self):

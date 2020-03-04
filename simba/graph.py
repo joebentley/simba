@@ -172,16 +172,16 @@ def nodes_from_dofs(gs, h_d) -> Nodes:
     dof = len(gs)
     for j in range(0, dof - 1):
         for k in range(j + 1, dof):
-            h_d = h_d[(j*2):((j+1)*2), (k*2):((k+1)*2)]
+            h_d_part = h_d[(j*2):((j+1)*2), (k*2):((k+1)*2)]
 
             # again can just look at one column as the interaction is symmetric
-            h_d = h_d[:, 0].T
+            h_d_part = h_d_part[:, 0].T
 
             # TODO: check this more thoroughly
-            if h_d[0] != 0:
+            if h_d_part[0] != 0:
                 nodes[j].connections.append(Connection(k, ConnectionType.BS))
                 nodes[k].connections.append(Connection(j, ConnectionType.BS))
-            if h_d[1] != 0:
+            if h_d_part[1] != 0:
                 nodes[k].connections.append(Connection(j, ConnectionType.SQZ))
                 nodes[j].connections.append(Connection(k, ConnectionType.SQZ))
 
@@ -247,13 +247,13 @@ def two_dof_transfer_function_to_graph(tf, filename):
     print(f"wrote {filename}")
 
 
-def transfer_function_to_graph(tf, filename):
+def transfer_function_to_graph(tf, filename, *, layout='neato'):
     """Directly convert SISO transfer function to graph."""
     from simba import transfer_function_to_state_space, split_system
 
     ss = transfer_function_to_state_space(tf).extended_to_quantum().to_physically_realisable()
 
     g = nodes_from_dofs(*split_system(ss.to_slh())).as_graphviz_agraph()
-    g.layout()
+    g.layout(prog=layout)
     g.draw(filename)
     print(f"wrote {filename}")

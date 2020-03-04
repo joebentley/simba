@@ -3,6 +3,6 @@ from simba import transfer_function_to_graph
 from sympy import Symbol
 
 s = Symbol('s')
-tf = (s**2 + s - 1) / (s**2 - s - 1)
+tf = (s**3 + s**2 + s - 1) / (-s**3 + s**2 - s - 1)
 
-transfer_function_to_graph(tf, 'example.pdf')
+transfer_function_to_graph(tf, 'example.pdf', layout='dot')

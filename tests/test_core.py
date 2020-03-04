@@ -2,7 +2,11 @@
 import pytest
 from simba import *
 from simba.core import j_matrix
+from simba.graph import nodes_from_dofs
 from sympy import Matrix, I, pprint, simplify, symbols, Rational
+
+import simba.config
+simba.config.params['checks'] = True
 
 
 def test_j_matrix():
@@ -117,10 +121,16 @@ def test_finding_2_dof_realisation():
         assert len(node.connections) == 0
 
 
+@pytest.mark.slow
 def test_finding_3_dof_realisation():
     s = symbols('s')
     tf = (s**3 + s**2 + s - 1) / (-s**3 + s**2 - s - 1)
-    split_system(transfer_function_to_state_space(tf).extended_to_quantum().to_physically_realisable().to_slh())
+
+    simba.config.params['checks'] = False
+    ss = transfer_function_to_state_space(tf).extended_to_quantum().to_physically_realisable()
+    nodes_from_dofs(*split_system(ss.to_slh()))
+    simba.config.params['checks'] = True
+    assert ss.is_physically_realisable
 
 
 def test_recovering_transfer_function_for_cascade_realisation():

@@ -44,3 +44,17 @@ def construct_transformation_matrix(n):
         u[x * 2, x] = 1
         u[x * 2 + 1, x + n // 2] = 1
     return u
+
+
+def matrix_simplify(m):
+    """Try to quickly simplify matrix m."""
+    from sympy import radsimp, powsimp, expand, Matrix, simplify
+
+    m = Matrix(m)  # make a mutable copy
+
+    rows, cols = m.shape
+    for i in range(rows):
+        for j in range(cols):
+            m[i, j] = simplify(expand(radsimp(powsimp(expand(m[i, j])), symbolic=False)))
+
+    return m
