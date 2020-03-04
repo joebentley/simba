@@ -2,7 +2,6 @@
 import pytest
 from simba import *
 from simba.core import j_matrix
-from simba.graph import nodes_from_dofs
 from sympy import Matrix, I, pprint, simplify, symbols, Rational
 
 import simba.config

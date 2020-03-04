@@ -188,65 +188,6 @@ def nodes_from_dofs(gs, h_d) -> Nodes:
     return Nodes(nodes)
 
 
-def nodes_from_two_dofs(g_1, g_2, h_d) -> Nodes:
-    """
-    Construct the Node graph for a two degree-of-freedom generalised open oscillator
-    :param g_1: the first generalised open oscillator feeding its output into g_2
-    :param g_2: the second generalised open oscillator taking its input from g_1
-    :param h_d: the direct interaction Hamiltonian between g_1 and g_2
-    :return: a `Nodes` instance
-    """
-
-    # TODO: distinguish between detuned cavity and tuned DPA
-    node_1 = Node(Internal.ALL if g_1.r != Matrix.zeros(2, 2) else Internal.TUNED)
-    node_2 = Node(Internal.ALL if g_2.r != Matrix.zeros(2, 2) else Internal.TUNED)
-
-    # now we figure out which self-connection we need
-    # only need to look at first column, as discussed by Hendra (2008) Section 6.3 https://arxiv.org/abs/0806.4448
-    self_conn_1 = g_1.k[:, 0]
-
-    if self_conn_1[0] != 0:
-        node_1.self_connections.add(ConnectionType.BS)
-    if self_conn_1[1] != 0:
-        node_1.self_connections.add(ConnectionType.SQZ)
-
-    self_conn_2 = g_2.k[:, 0]
-
-    if self_conn_2[0] != 0:
-        node_2.self_connections.add(ConnectionType.BS)
-    if self_conn_1[1] != 0:
-        node_2.self_connections.add(ConnectionType.SQZ)
-
-    # figure out the connections to other matrices from the interaction Hamiltonian matrix
-    # it should be Hermitian and off-diagonal so we'll just look at the upper-right block
-    h_d = h_d[0:2, 2:4]
-
-    # again can just look at one column as the interaction is symmetric
-    h_d = h_d[:, 0].T
-
-    # TODO: check this more thoroughly
-    if h_d[0] != 0:
-        node_1.connections.append(Connection(1, ConnectionType.BS))
-        node_2.connections.append(Connection(0, ConnectionType.BS))
-    if h_d[1] != 0:
-        node_1.connections.append(Connection(1, ConnectionType.SQZ))
-        node_2.connections.append(Connection(0, ConnectionType.SQZ))
-
-    return Nodes([node_1, node_2])
-
-
-def two_dof_transfer_function_to_graph(tf, filename):
-    """Directly convert two dof transfer function to graph."""
-    from simba import transfer_function_to_state_space, split_two_dof
-
-    ss = transfer_function_to_state_space(tf).extended_to_quantum().to_physically_realisable()
-
-    g = nodes_from_two_dofs(*split_two_dof(ss.to_slh())).as_graphviz_agraph()
-    g.layout()
-    g.draw(filename)
-    print(f"wrote {filename}")
-
-
 def transfer_function_to_graph(tf, filename, *, layout='neato'):
     """Directly convert SISO transfer function to graph."""
     from simba import transfer_function_to_state_space, split_system
