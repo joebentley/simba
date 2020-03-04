@@ -34,7 +34,7 @@ class Node:
     """
     Represents a single generalised open oscillator.
 
-    ``self.connections`` is a list of `Connection` to other generalised open oscillators
+    ``self.connections`` is a list of `Connection` to other generalised open oscillators, not including the series connection
     ``self.self_connections`` is a set of `ConnectionType` for connecting this node to itself, for realising the K matrix
     """
     def __init__(self, internal=Internal.TUNED):
@@ -82,6 +82,9 @@ class Nodes:
 
     def __iter__(self):
         return iter(self.nodes)
+
+    def __len__(self):
+        return len(self.nodes)
 
     def __str__(self):
         s = ""
@@ -143,7 +146,7 @@ class Nodes:
         return g
 
 
-def nodes_from_dofs(gs, h_d):
+def nodes_from_dofs(gs, h_d) -> Nodes:
     """
     Construct the Node graph for an n degree-of-freedom generalised open oscillator
     :param gs: list of n 1-dof generalised open oscillators
@@ -185,7 +188,7 @@ def nodes_from_dofs(gs, h_d):
     return Nodes(nodes)
 
 
-def nodes_from_two_dofs(g_1, g_2, h_d):
+def nodes_from_two_dofs(g_1, g_2, h_d) -> Nodes:
     """
     Construct the Node graph for a two degree-of-freedom generalised open oscillator
     :param g_1: the first generalised open oscillator feeding its output into g_2

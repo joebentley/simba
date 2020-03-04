@@ -107,7 +107,19 @@ def test_finding_2_dof_realisation():
     s = symbols('s')
     # cascade of two tuned cavities
     tf = (s + 1)**2 / (s - 1)**2
+    gs, h_d = split_system(transfer_function_to_state_space(tf).extended_to_quantum().to_physically_realisable().to_slh())
 
+    from simba.graph import nodes_from_dofs
+    nodes = nodes_from_dofs(gs, h_d)
+
+    assert len(nodes) == 2
+    for node in nodes:
+        assert len(node.connections) == 0
+
+
+def test_finding_3_dof_realisation():
+    s = symbols('s')
+    tf = (s**3 + s**2 + s - 1) / (-s**3 + s**2 - s - 1)
     split_system(transfer_function_to_state_space(tf).extended_to_quantum().to_physically_realisable().to_slh())
 
 
