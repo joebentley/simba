@@ -42,4 +42,5 @@ $ ./make_docs.sh
 
 * Example notebooks
 * Write paper
-* Upload to PyPI (& Conda?)
+* Implement scattering matrix
+* Include examples on this page
