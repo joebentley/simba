@@ -121,6 +121,10 @@ class Nodes:
                 if arrow_head is not None:
                     g.add_edge(str(i), f"{i}'", arrowtail=arrow_head, arrowhead=arrow_head, dir='both')
 
+        # add series connection between each node
+        for i in range(0, len(self.nodes) - 1):
+            g.add_edge(str(i), str(i + 1), 'series', arrowtail='none', arrowhead='normal', dir='both')
+
         # add other connections between each node
         for i, node in enumerate(self.nodes):
             for other in range(i+1, len(self.nodes)):
@@ -129,12 +133,11 @@ class Nodes:
                 arrow_head = _arrow_head_from_connections_set(connections)
 
                 if arrow_head is not None:
-                    g.add_edge(str(i), str(other), 'interaction', arrowtail=arrow_head, arrowhead=arrow_head, dir='both')
-                    g.add_edge(str(other), str(i), 'interaction', arrowtail=arrow_head, arrowhead=arrow_head, dir='both')
-
-        # add series connection between each node
-        for i in range(0, len(self.nodes) - 1):
-            g.add_edge(str(i), str(i + 1), 'series', arrowtail='none', arrowhead='normal', dir='both')
+                    # add edge depending on whether or not edge already exists in that direction
+                    if not g.has_edge(str(i), str(other)):
+                        g.add_edge(str(i), str(other), 'interaction', arrowtail=arrow_head, arrowhead=arrow_head, dir='both')
+                    else:
+                        g.add_edge(str(other), str(i), 'interaction', arrowtail=arrow_head, arrowhead=arrow_head, dir='both')
 
         # add input and output nodes
         g.add_node('input', shape='plaintext')
