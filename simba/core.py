@@ -1,7 +1,6 @@
 
 from copy import deepcopy
 from collections import namedtuple
-from functools import lru_cache
 
 from sympy import Matrix, Symbol, fraction, ImmutableMatrix, MatrixSymbol, I
 
@@ -192,9 +191,9 @@ class StateSpace:
         quantum_ss.b = ImmutableMatrix(Matrix.diag(self.b, self.b.C))
         quantum_ss.c = ImmutableMatrix(Matrix.diag(self.c, self.c.C))
         quantum_ss.d = ImmutableMatrix(Matrix.diag(self.d, self.d.C))
+        quantum_ss.paired_operator_form = False
         return quantum_ss
 
-    @lru_cache()
     def reorder_to_paired_form(self):
         r"""
         Return a new StateSpace with the system matrices reordered so that the state vectors, inputs, and outputs are
@@ -209,10 +208,13 @@ class StateSpace:
             (a_1, a_1^\dagger; a_2, a_2^\dagger; \dots; a_n, a_n^\dagger)^T,
 
 
-        Result with be cached using ``functools.lru_cache``, so subsequent calls should be "free".
+        Does nothing if self.paired_operator_form is True
 
         :return: StateSpace in paired up form.
         """
+        if self.paired_operator_form:
+            return self
+
         n = self.num_degrees_of_freedom
         if n % 2 != 0:
             raise DimensionError("num_degrees_of_freedom should be even for a quantum system")
@@ -350,8 +352,8 @@ class StateSpace:
                 return self
 
         # transform to paired operator form is needed
-        a, b, c, d = self if self.paired_operator_form else self.reorder_to_paired_form()
-        ss = StateSpace(a, b, c, d, paired_operator_form=True)
+        ss = self.reorder_to_paired_form()
+        a, b, c, d = ss
         t = ss.find_transformation_to_physically_realisable()
 
         from sympy import simplify
@@ -419,7 +421,8 @@ class StateSpace:
         from sympy import I, Rational
         j = j_matrix(self.num_degrees_of_freedom)
         SKR = namedtuple('SKR', ['s', 'k', 'r'])
-        return SKR(self.d, self.d**-1 * self.c, I * Rational(1, 4) * (j * self.a - self.a.H * j))
+        ss = self.reorder_to_paired_form()
+        return SKR(ss.d, ss.d**-1 * ss.c, I * Rational(1, 4) * (j * ss.a - ss.a.H * j))
 
     def to_slh(self, symbol='a'):
         """Create `StateSpace.to_skr` returning a `SLH` object using given symbol name ``symbol``, defaulting to 'a'."""
@@ -745,8 +748,11 @@ def split_system(open_osc: SLH):
     # construct Hamiltonian interaction matrix
     for j in range(0, dof - 1):
         for k in range(j + 1, dof):
+            print(open_osc.r[(k*2):((k+1)*2), (j*2):((j+1)*2)].H)
             h_d[(j*2):((j+1)*2), (k*2):((k+1)*2)] = open_osc.r[(k*2):((k+1)*2), (j*2):((j+1)*2)].H \
                 - 1 / (2 * I) * (k_blocks[k].H * k_blocks[j] - k_blocks[k].T * k_blocks[j].C)
+
+    # print(h_d)
 
     return gs, h_d
 

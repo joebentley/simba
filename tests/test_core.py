@@ -110,12 +110,15 @@ def test_finding_2_dof_realisation():
     s = symbols('s')
     # cascade of two tuned cavities
     tf = (s + 1)**2 / (s - 1)**2
-    gs, h_d = split_system(transfer_function_to_state_space(tf).extended_to_quantum().to_physically_realisable().to_slh())
+    ss = transfer_function_to_state_space(tf).extended_to_quantum().to_physically_realisable()
+    ss.pprint()
+    gs, h_d = split_system(ss.to_slh())
 
     from simba.graph import nodes_from_dofs
     nodes = nodes_from_dofs(gs, h_d)
 
     assert len(nodes) == 2
+    # should only have series collection
     for node in nodes:
         assert len(node.connections) == 0
 
