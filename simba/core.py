@@ -748,11 +748,8 @@ def split_system(open_osc: SLH):
     # construct Hamiltonian interaction matrix
     for j in range(0, dof - 1):
         for k in range(j + 1, dof):
-            print(open_osc.r[(k*2):((k+1)*2), (j*2):((j+1)*2)].H)
             h_d[(j*2):((j+1)*2), (k*2):((k+1)*2)] = open_osc.r[(k*2):((k+1)*2), (j*2):((j+1)*2)].H \
                 - 1 / (2 * I) * (k_blocks[k].H * k_blocks[j] - k_blocks[k].T * k_blocks[j].C)
-
-    # print(h_d)
 
     return gs, h_d
 
