@@ -4,7 +4,7 @@ from collections import namedtuple
 
 from sympy import Matrix, Symbol, fraction, ImmutableMatrix, MatrixSymbol, I
 
-from simba.utils import solve_matrix_eqn, construct_transformation_matrix, matrix_simplify
+from simba.utils import solve_matrix_eqn, construct_transformation_matrix, simplify
 from simba.errors import DimensionError, CoefficientError, StateSpaceError, ResultError
 import simba.config as config
 
@@ -29,9 +29,9 @@ def is_transfer_matrix_physically_realisable(expr, d_matrix=None):
         d_matrix = Matrix.eye(*j.shape)
 
     s = Symbol('s')
-    from sympy import simplify, conjugate
-    cond1 = simplify(expr.subs(s, -conjugate(s)).H * j * expr - j) == Matrix.zeros(*j.shape)
-    cond2 = simplify(d_matrix * j * d_matrix.H - j) == Matrix.zeros(*j.shape)
+    from sympy import conjugate
+    cond1 = simplify(expr.subs(s, -conjugate(s)).H * j * expr - j, Matrix.zeros(*j.shape))
+    cond2 = simplify(d_matrix * j * d_matrix.H - j, Matrix.zeros(*j.shape))
 
     return cond1 and cond2
 
@@ -269,7 +269,7 @@ class StateSpace:
         p, d = x.diagonalize(normalize=True)
 
         if config.params['checks']:
-            assert matrix_simplify(p.H - p**-1) == Matrix.zeros(*p.shape), "p should be unitary"
+            assert simplify(p.H - p**-1, Matrix.zeros(*p.shape)), "p should be unitary"
             assert d.is_diagonal(), "d should be diagonal"
         eigenvals = list(d.diagonal())
 
@@ -331,8 +331,8 @@ class StateSpace:
 
         if config.params['checks']:
             assert Matrix.diag(scaled_evs) == j, "Scaled eigenvalues matrix not recovered!"
-            assert matrix_simplify(p * j * p.H - x) == Matrix.zeros(*x.shape), "Result not recovered as expected!"
-        return matrix_simplify(p)
+            assert simplify(p * j * p.H - x, Matrix.zeros(*x.shape)), "Result not recovered as expected!"
+        return simplify(p)
 
     def to_physically_realisable(self):
         """
@@ -355,8 +355,6 @@ class StateSpace:
         ss = self.reorder_to_paired_form()
         a, b, c, d = ss
         t = ss.find_transformation_to_physically_realisable()
-
-        from sympy import simplify
 
         # apply transformation
         a = simplify(t**-1 * a * t)
@@ -386,8 +384,8 @@ class StateSpace:
         realisability1 = ss.a * j + j * ss.a.H + ss.b * j_i * ss.b.H
         realisability2 = j * ss.c.H + ss.b * j_i * ss.d.H
 
-        cond1 = matrix_simplify(realisability1) == Matrix.zeros(*realisability1.shape)
-        cond2 = matrix_simplify(realisability2) == Matrix.zeros(*realisability2.shape)
+        cond1 = simplify(realisability1, Matrix.zeros(*realisability1.shape))
+        cond2 = simplify(realisability2, Matrix.zeros(*realisability2.shape))
         return cond1 and cond2
 
     def raise_error_if_not_possible_to_realise(self):
@@ -402,7 +400,7 @@ class StateSpace:
         j = j_matrix(g.shape[0])
         s = Symbol('s')
 
-        from sympy import simplify, conjugate
+        from sympy import conjugate
         cond1 = simplify(g.subs(s, -conjugate(s)).H * j * g - j)
         if cond1 != Matrix.zeros(*j.shape):
             raise StateSpaceError(f"Not possible to realise: {cond1} != 0")

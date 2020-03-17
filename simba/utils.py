@@ -1,3 +1,4 @@
+import simba.config as conf
 from simba.errors import DimensionError
 from sympy import Matrix
 
@@ -46,15 +47,28 @@ def construct_transformation_matrix(n):
     return u
 
 
-def matrix_simplify(m):
-    """Try to quickly simplify matrix m."""
-    from sympy import radsimp, powsimp, expand, Matrix, simplify
+def simplify(expr, rhs=None):
+    """Simplify given expression or equation, using wolframscript if config.params['wolframscript'] is True"""
+    if conf.params['wolframscript']:
+        import subprocess
+        from sympy import Eq
+        import sympy.printing.mathematica as m
+        import sympy.parsing.mathematica as mp
 
-    m = Matrix(m)  # make a mutable copy
+        if rhs is not None:
+            s = m.mathematica_code(Eq(expr, rhs, evaluate=False))
+        else:
+            s = m.mathematica_code(expr)
 
-    rows, cols = m.shape
-    for i in range(rows):
-        for j in range(cols):
-            m[i, j] = simplify(expand(radsimp(powsimp(expand(m[i, j])), symbolic=False)))
+        result = subprocess.run(["wolframscript", "-code", f"Simplify[{s}]"], capture_output=True)
+        try:
+            return mp.mathematica(str(result.stdout))
+        except ValueError:  # mp.mathematica will throw a ValueError if wolframscript returns a list
+            return False
+    else:
+        from sympy import simplify
 
-    return m
+        if rhs is not None:
+            return simplify(expr) == rhs
+        else:
+            return simplify(expr)

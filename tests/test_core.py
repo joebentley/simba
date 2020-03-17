@@ -5,7 +5,6 @@ from simba.core import j_matrix
 from sympy import Matrix, I, pprint, simplify, symbols, Rational
 
 import simba.config
-simba.config.params['checks'] = True
 
 
 def test_j_matrix():
@@ -128,11 +127,17 @@ def test_finding_3_dof_realisation():
     s = symbols('s')
     tf = (s**3 + s**2 + s - 1) / (-s**3 + s**2 - s - 1)
 
-    simba.config.params['checks'] = False
-    ss = transfer_function_to_state_space(tf).extended_to_quantum().to_physically_realisable()
-    nodes_from_dofs(*split_system(ss.to_slh()))
-    simba.config.params['checks'] = True
-    assert ss.is_physically_realisable
+    # choose config to use based on whether or not wolframscript is installed
+    from simba.config import Param
+    if simba.config.is_wolframscript_installed():
+        params = {'checks': Param.ON, 'wolframscript': Param.ON}
+    else:
+        params = {'checks': Param.OFF, 'wolframscript': Param.OFF}
+
+    with simba.config.temp_set_params(params):
+        ss = transfer_function_to_state_space(tf).extended_to_quantum().to_physically_realisable()
+        nodes_from_dofs(*split_system(ss.to_slh()))
+        assert ss.is_physically_realisable
 
 
 def test_recovering_transfer_function_for_cascade_realisation():
