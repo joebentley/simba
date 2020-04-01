@@ -1,18 +1,18 @@
+from simba import transfer_function_to_graph, transfer_function_to_state_space
+from sympy import symbols
 
-from simba import transfer_function_to_graph, transfer_function_to_state_space, split_system
-from sympy import Symbol, simplify
+s = symbols('s')
+gamma = symbols('gamma', real=True, positive=True)
 
-s = Symbol('s')
-
-tf = (s - 1) / (s + 1)
+tf = (s - gamma) / (s + gamma)
 
 transfer_function_to_graph(tf, 'unstable-filter.pdf')
 
-tf = (s + 1) / (s - 1)
+tf = (s + gamma) / (s - gamma)
 
 transfer_function_to_graph(tf, 'tuned-cavity.pdf')
 
-tf = (s + 1) / (s - 1)
+tf = (s + gamma) / (s - gamma)
 tf = tf * tf
 
 # FIXME: should just be a pure cascade realisation

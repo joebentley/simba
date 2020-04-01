@@ -149,11 +149,12 @@ class Nodes:
         return g
 
 
-def nodes_from_dofs(gs, h_d) -> Nodes:
+def nodes_from_dofs(gs, h_d, adiabatically_eliminate=True) -> Nodes:
     """
     Construct the Node graph for an n degree-of-freedom generalised open oscillator
     :param gs: list of n 1-dof generalised open oscillators
     :param h_d: the direct interaction Hamiltonian matrix
+    :param adiabatically_eliminate: if True, remove beamsplitter-only self-connections from the node graph
     :return: a `Nodes` instance
     """
 
@@ -165,9 +166,18 @@ def nodes_from_dofs(gs, h_d) -> Nodes:
     # only need to look at first column, as discussed by Hendra (2008) Section 6.3 https://arxiv.org/abs/0806.4448
     for i, g in enumerate(gs):
         self_conn = g.k[:, 0]
-        if self_conn[0] != 0:
-            nodes[i].self_connections.add(ConnectionType.BS)
-        if self_conn[1] != 0:
+        has_beamsplitter_mixing = self_conn[0] != 0
+        has_squeezing_process = self_conn[1] != 0
+
+        if not adiabatically_eliminate:
+            if has_beamsplitter_mixing:
+                nodes[i].self_connections.add(ConnectionType.BS)
+        # don't adiabatically eliminate auxiliary mode if it has a squeezing-like self connection
+        else:
+            if has_beamsplitter_mixing and has_squeezing_process:
+                nodes[i].self_connections.add(ConnectionType.BS)
+
+        if has_squeezing_process:
             nodes[i].self_connections.add(ConnectionType.SQZ)
 
     # figure out the connections to other matrices from the interaction Hamiltonian matrix
@@ -191,13 +201,13 @@ def nodes_from_dofs(gs, h_d) -> Nodes:
     return Nodes(nodes)
 
 
-def transfer_function_to_graph(tf, filename, *, layout='neato'):
-    """Directly convert SISO transfer function to graph."""
+def transfer_function_to_graph(tf, filename, *, layout='neato', **kwargs):
+    """Directly convert SISO transfer function to graph. Passes `kwargs` to nodes_from_dofs"""
     from simba import transfer_function_to_state_space, split_system
 
     ss = transfer_function_to_state_space(tf).extended_to_quantum().to_physically_realisable()
 
-    g = nodes_from_dofs(*split_system(ss.to_slh())).as_graphviz_agraph()
+    g = nodes_from_dofs(*split_system(ss.to_slh()), **kwargs).as_graphviz_agraph()
     g.layout(prog=layout)
     g.draw(filename)
     print(f"wrote {filename}")
