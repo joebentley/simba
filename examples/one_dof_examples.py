@@ -1,4 +1,4 @@
-from simba import transfer_function_to_graph, transfer_function_to_state_space
+from simba import transfer_function_to_graph, tf2rss
 from sympy import symbols
 
 s = symbols('s')
@@ -14,6 +14,8 @@ transfer_function_to_graph(tf, 'tuned-cavity.pdf')
 
 tf = (s + gamma) / (s - gamma)
 tf = tf * tf
+
+print(tf2rss(tf).to_slh().split())
 
 # FIXME: should just be a pure cascade realisation
 

@@ -46,9 +46,19 @@ def transfer_function_to_state_space(expr):
     return StateSpace.from_transfer_function(expr)
 
 
+def tf2ss(expr):
+    """See `transfer_function_to_state_space`"""
+    return transfer_function_to_state_space(expr)
+
+
 def transfer_function_to_realisable_state_space(expr):
     """Convert given transfer function to physically realisable state space if possible."""
-    return transfer_function_to_state_space(expr).to_physically_realisable()
+    return transfer_function_to_state_space(expr).extended_to_quantum().to_physically_realisable()
+
+
+def tf2rss(expr):
+    """See `transfer_function_to_realisable_state_space`"""
+    return transfer_function_to_realisable_state_space(expr)
 
 
 class StateSpace:
@@ -618,7 +628,11 @@ class SLH:
                % (s_latex_string, latex(self.k), x0, x0d, latex(self.r), x0)
 
     def __repr__(self):
-        return f"({repr(self.s)}, {repr(self.k)}, {repr(self.r)})"
+        return f"(S = {repr(self.s)}, K = {repr(self.k)}, R = {repr(self.r)})"
+
+    def split(self):
+        """Returns `split_system(self)`."""
+        return split_system(self)
 
 
 def interaction_hamiltonian_from_k_matrix(k_matrix):

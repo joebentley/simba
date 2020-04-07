@@ -1,5 +1,5 @@
 
-from simba import transfer_function_to_graph
+from simba import transfer_function_to_graph, tf2rss
 from sympy import symbols
 
 
@@ -7,6 +7,8 @@ from sympy import symbols
 s = symbols('s')
 gamma_f, omega_s = symbols('gamma_f omega_s', real=True, positive=True)
 tf = (s**2 + s * gamma_f + omega_s**2) / (s**2 - s * gamma_f + omega_s**2)
+
+print(tf2rss(tf).to_slh().split())
 
 transfer_function_to_graph(tf, 'passive_coupled_cavity.pdf', layout='dot')
 
