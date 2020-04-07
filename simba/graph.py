@@ -165,7 +165,7 @@ def nodes_from_dofs(gs, h_d, adiabatically_eliminate=True) -> Nodes:
     # now we figure out which self-connection we need
     # only need to look at first column, as discussed by Hendra (2008) Section 6.3 https://arxiv.org/abs/0806.4448
     for i, g in enumerate(gs):
-        self_conn = g.k[:, 0]
+        self_conn = g.k
         has_beamsplitter_mixing = self_conn[0] != 0
         has_squeezing_process = self_conn[1] != 0
 

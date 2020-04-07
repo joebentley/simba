@@ -91,7 +91,7 @@ def test_unstable_filter_realisation():
 
     s, k, r = ss_2.to_skr()
     assert s == Matrix.eye(2), "Expected identity scattering matrix"
-    assert abs(k) == Matrix([[0, 2], [2, 0]]), "Did not get expected coupling matrix"
+    assert abs(k) == Matrix([[0, 2]]), "Did not get expected coupling matrix"
     assert r == Matrix.zeros(2), "Expected zero Hamiltonian matrix"
 
 

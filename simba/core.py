@@ -4,7 +4,7 @@ from collections import namedtuple
 
 from sympy import Matrix, Symbol, fraction, ImmutableMatrix, MatrixSymbol, I
 
-from simba.utils import solve_matrix_eqn, construct_transformation_matrix, simplify
+from simba.utils import solve_matrix_eqn, construct_permutation_matrix, simplify
 from simba.errors import DimensionError, CoefficientError, StateSpaceError, ResultError
 import simba.config as config
 
@@ -231,11 +231,11 @@ class StateSpace:
 
         # construct the transformation matrix that reorders the elements
         # e.g. (1, 2, 3, 11, 22, 33) -> (1, 11, 2, 22, 3, 33)
-        u = construct_transformation_matrix(n)
+        u = construct_permutation_matrix(n)
 
         # construct the matrices for the inputs and outputs
-        u_i = construct_transformation_matrix(self.num_inputs)
-        u_o = construct_transformation_matrix(self.num_outputs)
+        u_i = construct_permutation_matrix(self.num_inputs)
+        u_o = construct_permutation_matrix(self.num_outputs)
 
         # apply transformation and return
         return StateSpace(u*self.a*u.inv(), u*self.b*u_i.inv(), u_o*self.c*u.inv(), u_o*self.d*u_i.inv(),
@@ -426,11 +426,17 @@ class StateSpace:
         :math:`(S, K, R)`.
         Assume physically realisable but won't error if it's not.
         """
-        from sympy import I, Rational
+        from sympy import I, Rational, BlockMatrix
         j = j_matrix(self.num_degrees_of_freedom)
         SKR = namedtuple('SKR', ['s', 'k', 'r'])
         ss = self.reorder_to_paired_form()
-        return SKR(ss.d, ss.d**-1 * ss.c, I * Rational(1, 4) * (j * ss.a - ss.a.H * j))
+
+        # permutation matrix from (a_1, a_1^d; ...; a_n, a_n^d) -> (a_1, ..., a_n; a_1^d, ..., a_n^d)
+        permutation_matrix = construct_permutation_matrix(ss.num_inputs) ** -1
+        identity_block = Matrix(BlockMatrix([Matrix.eye(ss.num_inputs // 2), Matrix.zeros(ss.num_inputs // 2)]))
+
+        # TODO: d should be different here, see my paper
+        return SKR(ss.d, identity_block * permutation_matrix * ss.c, I * Rational(1, 4) * (j * ss.a - ss.a.H * j))
 
     def to_slh(self, symbol='a'):
         """Create `StateSpace.to_skr` returning a `SLH` object using given symbol name ``symbol``, defaulting to 'a'."""
