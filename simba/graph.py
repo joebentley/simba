@@ -1,6 +1,7 @@
 
 from sympy import Matrix
 from enum import Enum
+from typing import List
 
 
 class ConnectionType(Enum):
@@ -46,6 +47,14 @@ class Node:
         """Filter for *set* of `ConnectionType` to the `Node` with given index."""
         return set(map(lambda conn: conn.connection_type, filter(lambda conn: conn.index == index, self.connections)))
 
+    @property
+    def is_series_connected(self):
+        """
+        If the auxiliary mode is not coupled to the main mode, then the main mode is not connected to the series
+        connections, so we can ignore it in the series connections.
+        """
+        return len(self.self_connections) != 0
+
     def __str__(self):
         self_conns_str = "-> self via "
         if ConnectionType.BS in self.self_connections:
@@ -77,7 +86,7 @@ class Nodes:
     """
     List of Nodes connected in series, indexes starting at zero.
     """
-    def __init__(self, nodes=None):
+    def __init__(self, nodes: List[Node]=None):
         self.nodes = nodes or []
 
     def __iter__(self):
@@ -121,9 +130,26 @@ class Nodes:
                 if arrow_head is not None:
                     g.add_edge(str(i), f"{i}'", arrowtail=arrow_head, arrowhead=arrow_head, dir='both')
 
-        # add series connection between each node
-        for i in range(0, len(self.nodes) - 1):
-            g.add_edge(str(i), str(i + 1), 'series', arrowtail='none', arrowhead='normal', dir='both')
+        # add series connection between each node if series connected
+        first_connected = None
+        last_connected = None
+        connection_list = []
+
+        for i, node in enumerate(self.nodes):
+            if node.is_series_connected:
+                if first_connected is None:
+                    first_connected = i
+                elif last_connected is None:
+                    last_connected = i
+
+                connection_list.append(i)
+
+        if last_connected is None:
+            last_connected = first_connected
+
+        for i in range(0, len(connection_list) - 1):
+            g.add_edge(str(connection_list[i]) + "'", str(connection_list[i + 1]) + "'",
+                       'series', arrowtail='none', arrowhead='normal', dir='both')
 
         # add other connections between each node
         for i, node in enumerate(self.nodes):
@@ -143,18 +169,17 @@ class Nodes:
         g.add_node('input', shape='plaintext')
         g.add_node('output', shape='plaintext')
 
-        g.add_edge('input', '0')
-        g.add_edge(str(len(self.nodes) - 1), 'output')
+        g.add_edge('input', str(first_connected) + "'")
+        g.add_edge(str(last_connected) + "'", 'output')
 
         return g
 
 
-def nodes_from_dofs(gs, h_d, adiabatically_eliminate=True) -> Nodes:
+def nodes_from_dofs(gs, h_d) -> Nodes:
     """
     Construct the Node graph for an n degree-of-freedom generalised open oscillator
     :param gs: list of n 1-dof generalised open oscillators
     :param h_d: the direct interaction Hamiltonian matrix
-    :param adiabatically_eliminate: if True, remove beamsplitter-only self-connections from the node graph
     :return: a `Nodes` instance
     """
 
@@ -163,19 +188,14 @@ def nodes_from_dofs(gs, h_d, adiabatically_eliminate=True) -> Nodes:
     nodes = list(map(lambda g: Node(Internal.ALL if g.r != Matrix.zeros(2, 2) else Internal.TUNED), gs))
 
     # now we figure out which self-connection we need
-    # only need to look at first column, as discussed by Hendra (2008) Section 6.3 https://arxiv.org/abs/0806.4448
+    # see Hendra (2008) Section 6.3 https://arxiv.org/abs/0806.4448
     for i, g in enumerate(gs):
         self_conn = g.k
         has_beamsplitter_mixing = self_conn[0] != 0
         has_squeezing_process = self_conn[1] != 0
 
-        if not adiabatically_eliminate:
-            if has_beamsplitter_mixing:
-                nodes[i].self_connections.add(ConnectionType.BS)
-        # don't adiabatically eliminate auxiliary mode if it has a squeezing-like self connection
-        else:
-            if has_beamsplitter_mixing and has_squeezing_process:
-                nodes[i].self_connections.add(ConnectionType.BS)
+        if has_beamsplitter_mixing:
+            nodes[i].self_connections.add(ConnectionType.BS)
 
         if has_squeezing_process:
             nodes[i].self_connections.add(ConnectionType.SQZ)
@@ -201,13 +221,13 @@ def nodes_from_dofs(gs, h_d, adiabatically_eliminate=True) -> Nodes:
     return Nodes(nodes)
 
 
-def transfer_function_to_graph(tf, filename, *, layout='neato', **kwargs):
-    """Directly convert SISO transfer function to graph. Passes `kwargs` to nodes_from_dofs"""
+def transfer_function_to_graph(tf, filename, *, layout='neato'):
+    """Directly convert SISO transfer function to graph."""
     from simba import transfer_function_to_state_space, split_system
 
     ss = transfer_function_to_state_space(tf).extended_to_quantum().to_physically_realisable()
 
-    g = nodes_from_dofs(*split_system(ss.to_slh()), **kwargs).as_graphviz_agraph()
+    g = nodes_from_dofs(*split_system(ss.to_slh())).as_graphviz_agraph()
     g.layout(prog=layout)
     g.draw(filename)
     print(f"wrote {filename}")
