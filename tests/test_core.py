@@ -187,3 +187,15 @@ def test_concatenation_product():
     assert g_ab.s == Matrix.eye(4), "Expected identity scattering matrix"
     assert g_ab.k == Matrix.diag(g_a.k, g_a.k), "Expected block diagonal coupling matrix"
     assert g_ab.r == Matrix.zeros(4), "Expected zero Hamiltonian matrix"
+
+
+def test_interaction_hamiltonian_for_coupled_cavity_system():
+    s = symbols('s')
+    gamma_f, omega_s = symbols('gamma_f omega_s', real=True, positive=True)
+    tf = (s**2 + s * gamma_f + omega_s**2) / (s**2 - s * gamma_f + omega_s**2)
+
+    from sympy import sqrt, conjugate
+    a_1, u_1 = symbols('a_1 u_1', commutative=False)
+
+    h_int = tf2rss(tf).to_slh().interaction_hamiltonian
+    assert h_int == sqrt(2)*I*sqrt(gamma_f)*(a_1*conjugate(u_1) - conjugate(a_1)*u_1)

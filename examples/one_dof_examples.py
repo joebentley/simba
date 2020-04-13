@@ -15,8 +15,6 @@ transfer_function_to_graph(tf, 'tuned-cavity.pdf')
 tf = (s + gamma) / (s - gamma)
 tf = tf * tf
 
-print(tf2rss(tf).to_slh().split())
-
 # FIXME: should just be a pure cascade realisation
 
 transfer_function_to_graph(tf, 'passive-cascade.pdf')

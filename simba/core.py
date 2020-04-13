@@ -640,6 +640,16 @@ class SLH:
         """Returns `split_system(self)`."""
         return split_system(self)
 
+    @property
+    def interaction_hamiltonian(self):
+        """
+        Returns the interaction Hamiltonian for the system via
+        `interaction_hamiltonian_from_linear_coupling_operator(self.k * self.x0)`
+        """
+        print(self.k)
+        print(self.x0)
+        return interaction_hamiltonian_from_linear_coupling_operator(self.k * self.x0)
+
 
 def interaction_hamiltonian_from_k_matrix(k_matrix):
     return interaction_hamiltonian_from_linear_coupling_operator(linear_coupling_operator_from_k_matrix(k_matrix))
@@ -650,22 +660,18 @@ def interaction_hamiltonian_from_linear_coupling_operator(l_operator):
     Calculate the idealised interaction hamiltonian for the given linear coupling operator.
 
     .. math::
-        H_\text{int}(t) = i(L^T \eta(t)^* - L^\dagger \eta(t)),
+        H_\text{int} = i[L^\dagger\ -L^\dagger] u,
 
-    where :math:`\eta = (\eta_1, \eta_1^\dagger; \dots; \eta_m, \eta_m^\dagger)^T`
+    where :math:`u = (u_1, u_1^\dagger; \dots; u_m, u_m^\dagger)^T` and :math:`L \in \mathbb{L}^{m\times1}`
 
-    TODO: check this properly, not totally sure about the dimensions of :math:`\eta`, not sure if this is correct at all
-
-    Raises `DimensionError` if not ``l_operator`` not a column vector or does not have an even number of rows.
+    Raises `DimensionError` if not ``l_operator`` not a column vector.
     """
     if l_operator.shape[1] != 1:
         raise DimensionError(f"L is not a column vector: {l_operator.shape}")
-    if l_operator.shape[0] % 2 != 0:
-        raise DimensionError(f"L does not have even number of rows: {l_operator.shape}")
 
-    from sympy import I, simplify
-    states = make_complex_ladder_state(l_operator.shape[1], "eta")
-    h_int = I * (l_operator.T * states.conjugate() - l_operator.H * states)
+    from sympy import I, simplify, BlockMatrix
+    states = make_complex_ladder_state(l_operator.shape[1], "u")
+    h_int = I * Matrix(BlockMatrix([[l_operator.H, -l_operator.T]])) * states
     if h_int.shape != (1, 1):
         raise DimensionError(f"Expected interaction Hamiltonian to be scalar, instead: {h_int.shape}")
     return simplify(h_int[0, 0])

@@ -10,6 +10,8 @@ tf = (s**2 + s * gamma_f + omega_s**2) / (s**2 - s * gamma_f + omega_s**2)
 
 print(tf2rss(tf).to_slh().split())
 
+print(tf2rss(tf).to_slh().interaction_hamiltonian)
+
 transfer_function_to_graph(tf, 'passive_coupled_cavity.pdf', layout='dot')
 
 # parameterise with lambda = omega_s**2 - g**2 < 0
