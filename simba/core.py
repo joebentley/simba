@@ -906,11 +906,15 @@ class SplitNetwork:
         """Calculate the input-output equations for the auxiliary fields as column vector."""
         eqns = []
 
-        for i in range(len(self.gs)):
+        for i, g in enumerate(self.gs):
             ap, apd = make_complex_ladder_state(1, f'a\'_{i + 1}')
             ain, aind = make_complex_ladder_state(1, f'ain_{i + 1}')
             aout, aoutd = make_complex_ladder_state(1, f'aout_{i + 1}')
             gamma_i = Symbol(f'gamma_{i + 1}', positive=True, real=True)
+
+            # check if gamma_i should be zero (i.e. if there is no coupling)
+            if g.k == Matrix.zeros(1, 2):
+                gamma_i = 0
 
             eqns.append(-aout + ain - sympy.sqrt(gamma_i) * ap)
             eqns.append(-aoutd + aind - sympy.sqrt(gamma_i) * apd)
@@ -933,15 +937,29 @@ class SplitNetwork:
         eqns = self.interaction_hamiltonian.equations_of_motion + s * x
 
         # add langevin terms to auxiliary modes
-        for i in range(x.rows // 4):
+        for i, g in enumerate(self.gs):
             ain, aind = make_complex_ladder_state(1, f'ain_{i + 1}')
             gamma_i = Symbol(f'gamma_{i + 1}', positive=True, real=True)
+
+            # check if gamma_i should be zero (i.e. if there is no coupling)
+            if g.k == Matrix.zeros(1, 2):
+                gamma_i = 0
+
             aux_mode_index = x.rows // 2 + 2 * i  # index of aux modes within eqns
             eqns[aux_mode_index] += -gamma_i * x[aux_mode_index] + sympy.sqrt(2 * gamma_i) * ain
             eqns[aux_mode_index+1] += -gamma_i * x[aux_mode_index+1] + sympy.sqrt(2 * gamma_i) * aind
 
+        # construct the series feed equations (aout_1 -> ain_2 etc..)
+        _series = []
+        for i in range(len(self.gs) - 1):
+            aout, aoutd = make_complex_ladder_state(1, f'aout_{i + 1}')
+            ain, aind = make_complex_ladder_state(1, f'ain_{i + 2}')
+            _series.append(aout - ain)
+            _series.append(aoutd - aind)
+        _series = Matrix(_series)
+
         # add the input-output equations
-        return SplitNetwork.FrequencyDomainEqns(Matrix(sympy.BlockMatrix([[eqns], [self.input_output_eqns]])))
+        return SplitNetwork.FrequencyDomainEqns(Matrix(sympy.BlockMatrix([[eqns], [self.input_output_eqns], [_series]])))
 
 
 def split_system(open_osc: SLH):
