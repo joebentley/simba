@@ -178,10 +178,10 @@ def test_reordering_to_paired_form():
 
 
 def test_concatenation_product():
-    s, a, b = symbols('s a b')
+    s = symbols('s')
     tf = (s - 2) / (s + 2)
     system = transfer_function_to_state_space(tf).extended_to_quantum().to_physically_realisable()
-    g_a, g_b = system.to_slh(a), system.to_slh(b)
+    g_a, g_b = system.to_slh('a'), system.to_slh('b')
     g_ab = concat(g_a, g_b)
 
     assert g_ab.s == Matrix.eye(4), "Expected identity scattering matrix"
@@ -195,7 +195,7 @@ def test_interaction_hamiltonian_for_coupled_cavity_system():
     tf = (s**2 + s * gamma_f + omega_s**2) / (s**2 - s * gamma_f + omega_s**2)
 
     from sympy import sqrt, conjugate
-    a_1, u_1 = symbols('a_1 u_1', commutative=False)
+    a_1, u = symbols('a_1 u', commutative=False)
 
     h_int = tf2rss(tf).to_slh().interaction_hamiltonian
-    assert h_int == sqrt(2)*I*sqrt(gamma_f)*(a_1*conjugate(u_1) - conjugate(a_1)*u_1)
+    assert h_int == sqrt(2)*I*sqrt(gamma_f)*(a_1*conjugate(u) - conjugate(a_1)*u)
