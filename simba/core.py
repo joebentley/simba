@@ -1,7 +1,9 @@
 
 from copy import deepcopy
 from collections import namedtuple
+from typing import *
 
+import sympy
 from sympy import Matrix, Symbol, fraction, ImmutableMatrix, MatrixSymbol, I
 
 from simba.utils import solve_matrix_eqn, construct_permutation_matrix, simplify
@@ -582,6 +584,8 @@ def concat(a, b):
 
 def series(g_to, g_from):
     r"""
+    *Not yet implemented*
+
     Series product representing the feeding of the output of ``g_from`` into the input of ``g_to``. The arguments
     are in this order to match the notation below. The generalised open oscillators :math:`G_1` and :math:`G_2` are as
     defined in `concat`.
@@ -597,6 +601,7 @@ def series(g_to, g_from):
     :param g_to: `SLH` object representing generalised open oscillator :math:`G_2`
     :return: `SLH` object representing concatenation of both
     """
+    raise NotImplementedError("series(g_to, g_from) is not yet implemented.")
 
 
 class SLH:
@@ -646,8 +651,6 @@ class SLH:
         Returns the interaction Hamiltonian for the system via
         `interaction_hamiltonian_from_linear_coupling_operator(self.k * self.x0)`
         """
-        print(self.k)
-        print(self.x0)
         return interaction_hamiltonian_from_linear_coupling_operator(self.k * self.x0)
 
 
@@ -699,7 +702,7 @@ def linear_coupling_operator_from_k_matrix(k_matrix, symbol='a'):
 
 def hamiltonian_from_r_matrix(r_matrix, symbol='a'):
     r"""
-    Calculate symbolic Hamiltonian from R matrix assuming `paired operator form`.
+    Calculate symbolic internal Hamiltonian from R matrix assuming `paired operator form`.
 
     .. math::
         H = x_0^\dagger R x_0,
@@ -729,13 +732,20 @@ def make_complex_ladder_state(num_dofs, symbol='a'):
     Use ``symbol`` keyword arg to set alternative symbol for variables instead of using ``a``
 
     For example, for ``num_dofs == 2``, result is :math:`(a_1, a_1^\dagger; a_2, a_2^\dagger)^T`.
+
+    If ``num_dofs == 1`` then just returns :math:`(a, a^\dagger)^T`
     """
     states = []
 
-    for i in range(num_dofs):
-        s = Symbol(f"{symbol}_{i + 1}", commutative=False)
+    if num_dofs == 1:
+        s = Symbol(symbol, commutative=False)
         states.append(s)
         states.append(s.conjugate())
+    else:
+        for i in range(num_dofs):
+            s = Symbol(f"{symbol}_{i + 1}", commutative=False)
+            states.append(s)
+            states.append(s.conjugate())
 
     return Matrix(states)
 
@@ -743,13 +753,204 @@ def make_complex_ladder_state(num_dofs, symbol='a'):
 """Network Synthesis"""
 
 
+class SplitNetwork:
+    """
+    Represents a tuple of ([G_1, ..., G_n], H^d), as returned by `split_system`.
+
+    Each :math:`G_i` is assumed to be series fed into :math:`G_{i+1}`, however if :math:`L = 0` for :math:`G_i` it
+    can be considered as not being series connected as the external field will only couple to the auxiliary degree of
+    freedom which is adiabatically eliminated.
+    """
+
+    def __init__(self, gs: List[SLH], h_d: Matrix):
+        self.gs = gs
+        self.h_d = h_d
+
+    def __getitem__(self, item):
+        if item == 0:
+            return self.gs
+        elif item == 1:
+            return self.h_d
+        else:
+            raise IndexError("Out of range (index must be 0 or 1)")
+
+    def __iter__(self):
+        return iter((self.gs, self.h_d))
+
+    def __str__(self):
+        return str(tuple(self))
+
+    @property
+    def states(self) -> Matrix:
+        """Return the state symbols for the main and auxiliary mode for the entire network."""
+        states = make_complex_ladder_state(len(self.gs), 'a')
+        aux_states = make_complex_ladder_state(len(self.gs), 'a\'')
+        return Matrix(sympy.BlockMatrix([[states], [aux_states]]))
+
+    @property
+    def input_output_symbols(self) -> Matrix:
+        """Return the symbols for the input and output fields."""
+        symbols = []
+
+        for i in range(len(self.gs)):
+            ain, aind = make_complex_ladder_state(1, f'ain_{i + 1}')
+            aout, aoutd = make_complex_ladder_state(1, f'aout_{i + 1}')
+
+            symbols.append(ain)
+            symbols.append(aind)
+            symbols.append(aout)
+            symbols.append(aoutd)
+
+        return Matrix(symbols)
+
+    class InteractionHamiltonian:
+        r"""
+        Represents the interaction Hamiltonian as a Matrix in order
+
+        ..math::
+            `(a_1, a_1^\dagger, \dots, a_n, a_n^\dagger; a_1', a_1'^\dagger,\dots, a_n', a_n'^\dagger)`,
+
+        where :math:`a_i` is the annihilation operator for the main cavity mode of the i-th system and
+        :math:`a_i'` is for the corresponding auxiliary mode.
+        """
+
+        def __init__(self, h: Matrix):
+            self.h = h
+
+        @property
+        def expr(self) -> sympy.Expr:
+            x = self.states
+            return (x.H * self.h * x)[0, 0]
+
+        @property
+        def states(self) -> Matrix:
+            """Return the state symbols for the main and auxiliary modes for the network."""
+            states = make_complex_ladder_state(self.h.rows // 4, 'a')
+            aux_states = make_complex_ladder_state(self.h.rows // 4, 'a\'')
+            return Matrix(sympy.BlockMatrix([[states], [aux_states]]))
+
+        @property
+        def dynamical_matrix(self) -> Matrix:
+            """Compute dynamical matrix as shown in ``notes/eqns-of-motion-from-hamiltonian-matrix.pdf``."""
+            n = self.h.rows // 2
+            j_1 = Matrix([[0, 1], [-1, 0]])
+            j_mat = Matrix(sympy.BlockDiagMatrix(*([j_1] * n)))
+            k_mat = Matrix.diag([-1, 1] * n)
+
+            # row swapping matrix
+            theta_1 = Matrix([[0, 1], [1, 0]])
+            theta_mat = Matrix(sympy.BlockDiagMatrix(*([theta_1] * n)))
+
+            a_mat = I * (j_mat.T * self.h.T * theta_mat + k_mat * self.h)
+            if a_mat.shape != (2*n, 2*n):
+                raise DimensionError(f"Expected a_mat to have shape {(2*n, 2*n)}, instead had {a_mat.shape}")
+            return a_mat
+
+        @property
+        def equations_of_motion(self) -> Matrix:
+            r"""
+            Compute the Heisenberg equations of motion of the interacting terms (not including the Langevin equations)
+            , using the Bosonic commutation relations
+
+            ..math::
+                [a_i, a_j] = 0, \quad [a_i, a_j^\dagger] = \delta_{i, j},
+
+            and
+
+            ..math::
+                [a_i', a_j'] = 0, \quad [a_i', a_j'^\dagger] = \delta_{i, j}
+
+            Returns eqns in order
+            :math:`(a_1, a_1^\dagger, \dots, a_n, a_n^\dagger; a_1', a_1'^\dagger,\dots, a_n', a_n'^\dagger)`.
+
+            :returns column vector of equations of motion
+            """
+            x = self.states
+            x_dot = self.dynamical_matrix * x
+            if x_dot.shape != (x.rows, 1):
+                raise DimensionError(f"Expected x_dot to have shape ({x.rows}, 1), instead had {x_dot.shape}")
+            return x_dot
+
+    @property
+    def interaction_hamiltonian(self) -> InteractionHamiltonian:
+        """
+        Compute the interaction Hamiltonian between internal degrees of freedom in the network, not including
+        the external continuum fields.
+        """
+
+        from sympy import BlockDiagMatrix, sqrt, conjugate
+
+        h_int = Matrix(BlockDiagMatrix(self.h_d, Matrix.zeros(*self.h_d.shape)))
+
+        offset = self.h_d.rows
+
+        for i, g in enumerate(self.gs):
+            gamma_i = Symbol(f'gamma_{i + 1}', positive=True, real=True)
+            alpha, beta = g.k
+            epsilon_1 = beta * sqrt(gamma_i)
+            epsilon_2 = -conjugate(alpha * sqrt(gamma_i))
+
+            # a <-> a'
+            h_int[i * 2, offset + i * 2] = -I / 2 * conjugate(epsilon_1)
+            # a^\dag <-> a'^\dag
+            h_int[i * 2 + 1, offset + i * 2 + 1] = I / 2 * epsilon_1
+            # a <-> a'^\dag
+            h_int[i * 2, offset + i * 2 + 1] = -I / 2 * conjugate(epsilon_2)
+            # a^\dag <-> a'
+            h_int[i * 2 + 1, offset + i * 2] = I / 2 * epsilon_2
+
+        return SplitNetwork.InteractionHamiltonian(h_int)
+
+    @property
+    def input_output_eqns(self) -> Matrix:
+        """Calculate the input-output equations for the auxiliary fields as column vector."""
+        eqns = []
+
+        for i in range(len(self.gs)):
+            ap, apd = make_complex_ladder_state(1, f'a\'_{i + 1}')
+            ain, aind = make_complex_ladder_state(1, f'ain_{i + 1}')
+            aout, aoutd = make_complex_ladder_state(1, f'aout_{i + 1}')
+            gamma_i = Symbol(f'gamma_{i + 1}', positive=True, real=True)
+
+            eqns.append(-aout + ain - sympy.sqrt(gamma_i) * ap)
+            eqns.append(-aoutd + aind - sympy.sqrt(gamma_i) * apd)
+
+        return Matrix(eqns)
+
+    class FrequencyDomainEqns:
+        """Used to manage results of `SplitNetwork.frequency_domain_eqns`."""
+        def __init__(self, eqns: Matrix):
+            self.eqns = eqns
+
+        def solve(self, symbols: List):
+            return sympy.linsolve(list(self.eqns), symbols)
+
+    @property
+    def frequency_domain_eqns(self) -> FrequencyDomainEqns:
+        """Return all the equations in frequency domain."""
+        s = Symbol('s', real=False)
+        x = self.states
+        eqns = self.interaction_hamiltonian.equations_of_motion + s * x
+
+        # add langevin terms to auxiliary modes
+        for i in range(x.rows // 4):
+            ain, aind = make_complex_ladder_state(1, f'ain_{i + 1}')
+            gamma_i = Symbol(f'gamma_{i + 1}', positive=True, real=True)
+            aux_mode_index = x.rows // 2 + 2 * i  # index of aux modes within eqns
+            eqns[aux_mode_index] += -gamma_i * x[aux_mode_index] + sympy.sqrt(2 * gamma_i) * ain
+            eqns[aux_mode_index+1] += -gamma_i * x[aux_mode_index+1] + sympy.sqrt(2 * gamma_i) * aind
+
+        # add the input-output equations
+        return SplitNetwork.FrequencyDomainEqns(Matrix(sympy.BlockMatrix([[eqns], [self.input_output_eqns]])))
+
+
 def split_system(open_osc: SLH):
     """
     Split n degree of freedom open oscillator into n one degree of freedom open oscillators and a direct interaction
     Hamiltonian matrix.
 
-    :param open_osc:
-    :return: tuple of ([G_1, ..., G_n], H^d)
+    :param open_osc: the n degree of freedom open oscillator to split
+    :return: a `SplitNetwork` which represents a tuple of ([G_1, ..., G_n], H^d)
     """
     dof = open_osc.r.shape[0] // 2
 
@@ -761,9 +962,13 @@ def split_system(open_osc: SLH):
     # get the list of mx2 k matrices
     k_blocks = list(map(lambda i: open_osc.k[0:2, i:(i+2)], range(0, 2 * dof, 2)))
 
+    # constructs one open oscillator
+    def construct_slh(index, k_r):
+        k, r = k_r
+        return SLH(Matrix.eye(2, 2), k, r, make_complex_ladder_state(1, f'a_{index + 1}'))
+
     # construct the open oscillators
-    gs = list(map(lambda v: SLH(Matrix.eye(2, 2), v[1][0], v[1][1], make_complex_ladder_state(1, f'a_{v[0]}')),
-                  enumerate(zip(k_blocks, r_blocks))))
+    gs = list(map(lambda v: construct_slh(*v), enumerate(zip(k_blocks, r_blocks))))
 
     # TODO: for now we assume no scattering for simplicity
 
@@ -775,5 +980,4 @@ def split_system(open_osc: SLH):
             h_d[(j*2):((j+1)*2), (k*2):((k+1)*2)] = open_osc.r[(k*2):((k+1)*2), (j*2):((j+1)*2)].H \
                 - 1 / (2 * I) * (k_blocks[k].H * k_blocks[j] - k_blocks[k].T * k_blocks[j].C)
 
-    return gs, h_d
-
+    return SplitNetwork(gs, h_d)

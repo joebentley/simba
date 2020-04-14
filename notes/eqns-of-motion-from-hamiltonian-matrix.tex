@@ -1,0 +1,39 @@
+\documentclass{article}
+\usepackage{amssymb}
+\usepackage{mathtools}
+
+\title{Equations of motion from Hamiltonian matrix}
+
+\author{Joe Bentley}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+We have a state vector of the form $\vec{a} = (\hat{a}_1, \hat{a}_1^\dagger;\dots;\hat{a}_n, \hat{a}_n^\dagger)$ with commutation relations $[\hat{a}_i, \hat{a}_j^\dagger] = \delta_{ij}$, $[\hat{a}_i, \hat{a}_j] = 0$. The Hamiltonian is given by $\hat{H} = \sum_{ij} \vec{a}_i^\dagger H_{ij} \vec{a}_j$ where $H_{ij}$ is the Hamiltonian matrix.
+
+Further note that $[\vec{a}_k, \vec{a}_i] = J_{ki}$ where,
+\begin{equation}
+	J = \text{diag}(J_1, \dots, J_1) \in \mathbb{R}^{2n\times 2n},\quad J_1 = \begin{pmatrix}
+		0 & 1 \\ -1 & 0
+	\end{pmatrix},
+\end{equation}
+and $[\vec{a}_j^\dagger, \vec{a}_i] = K_{ji}$, where $K = -\text{diag}(1, -1, \dots, 1, -1)\in \mathbb{R}^{2n\times 2n}$.
+
+The Heisenberg equation of motion is given by,
+\begin{align*}
+	\dot{\vec{a}}_i &= i[\hat{H},\vec{a}_i] = i[\sum_{jk} \vec{a}_j^\dagger H_{jk} \vec{a}_k, \vec{a}_i] = i \sum_{jk} H_{jk} [\vec{a}_j^\dagger \vec{a}_k, \vec{a}_i] \\
+	&= i \sum_{jk} H_{jk} (\vec{a}_j^\dagger [\vec{a}_k, \vec{a}_i] + [\vec{a}_j^\dagger, \vec{a}_i]\vec{a}_k) \\
+	&= i \sum_{jk}(\vec{a}_j^\dagger H_{jk} J_{ki} + K_{ij} H_{jk} \vec{a}_k),
+\end{align*}
+
+So that,
+\begin{equation}
+	\dot{\vec{a}} = i((\vec{a}^\dagger H J)^T + K H \vec{a}) = i(J^TH^T\Theta+KH)\vec{a},
+\end{equation}
+where $H$ here is the Hamiltonian matrix and,
+\begin{equation}
+	\Theta = \text{diag}(\Theta_1,\dots,\Theta_1) \in \mathbb{R}^{2n\times 2n},\quad \Theta_1 = \begin{pmatrix}0&1\\1&0\end{pmatrix}.
+\end{equation}
+
+\end{document}
