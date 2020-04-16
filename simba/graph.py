@@ -5,6 +5,12 @@ from .core import SplitNetwork
 
 
 class ConnectionType(Enum):
+    r"""
+    Represents a connection between two main modes in the setup.
+
+    It can either be beamsplitter-like (i.e. :math:`\hat{a}\hat{b}^\dagger + \hat{a}^\dagger\hat{b}`)
+    or non-energy conserving squeezing-style interaction (i.e. :math:`\hat{a}\hat{b} + \hat{a}^\dagger\hat{b}^\dagger`).
+    """
     BS = 1        # beamsplitter-like energy-preserving connection
     SQZ = 2       # squeezing style interaction, either two-mode (non-degenerate) or single-mode (degenerate)
 
@@ -17,7 +23,7 @@ class ConnectionType(Enum):
 
 class Connection:
     """
-    Represents a single connection to the node at given index (starting at zero)
+    Represents a single connection to the node at given index (starting at zero).
     """
     def __init__(self, index: int, connection_type: ConnectionType):
         self.index = index
@@ -25,6 +31,7 @@ class Connection:
 
 
 class Internal(Enum):
+    """Represents the type of internal dynamics of the system."""
     TUNED = 1     # tuned cavity
     DETUNED = 2   # detuned cavity
     DPA = 3       # degenerate parametric amplifier (internal squeezing)
