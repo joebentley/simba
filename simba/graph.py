@@ -2,6 +2,7 @@
 from sympy import Matrix
 from enum import Enum
 from typing import List
+from .core import SplitNetwork
 
 
 class ConnectionType(Enum):
@@ -219,6 +220,11 @@ def nodes_from_dofs(gs, h_d) -> Nodes:
                 nodes[j].connections.append(Connection(k, ConnectionType.SQZ))
 
     return Nodes(nodes)
+
+
+def nodes_from_network(network: SplitNetwork) -> Nodes:
+    """Call `nodes_from_dofs` with contents of network."""
+    return nodes_from_dofs(network.gs, network.h_d)
 
 
 def transfer_function_to_graph(tf, filename, *, layout='neato'):

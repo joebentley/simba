@@ -63,6 +63,13 @@ def tf2rss(expr):
     return transfer_function_to_realisable_state_space(expr)
 
 
+def tf2network(expr: sympy.Expr) -> 'SplitNetwork':
+    """Calculate split network directly from transfer function"""
+    rs = tf2rss(expr)
+    slh = rs.to_slh()
+    return slh.split()
+
+
 class StateSpace:
     r"""
     Represents a dynamical quantum state-space which describes the time-domain evolution of a system.
@@ -641,7 +648,7 @@ class SLH:
     def __repr__(self):
         return f"(S = {repr(self.s)}, K = {repr(self.k)}, R = {repr(self.r)})"
 
-    def split(self):
+    def split(self) -> 'SplitNetwork':
         """Returns `split_system(self)`."""
         return split_system(self)
 
@@ -842,6 +849,7 @@ class SplitNetwork:
             theta_mat = Matrix(sympy.BlockDiagMatrix(*([theta_1] * n)))
 
             a_mat = I * (j_mat.T * self.h.T * theta_mat + k_mat * self.h)
+
             if a_mat.shape != (2*n, 2*n):
                 raise DimensionError(f"Expected a_mat to have shape {(2*n, 2*n)}, instead had {a_mat.shape}")
             return a_mat
@@ -887,17 +895,17 @@ class SplitNetwork:
         for i, g in enumerate(self.gs):
             gamma_i = Symbol(f'gamma_{i + 1}', positive=True, real=True)
             alpha, beta = g.k
-            epsilon_1 = beta * sqrt(gamma_i)
-            epsilon_2 = -conjugate(alpha * sqrt(gamma_i))
+            epsilon_1 = beta * sqrt(2 * gamma_i)
+            epsilon_2 = -conjugate(alpha * sqrt(2 * gamma_i))
 
             # a <-> a'
-            h_int[i * 2, offset + i * 2] = -I / 2 * conjugate(epsilon_1)
+            h_int[i * 2 + 1, offset + i * 2] = -I / 2 * conjugate(epsilon_1)
             # a^\dag <-> a'^\dag
-            h_int[i * 2 + 1, offset + i * 2 + 1] = I / 2 * epsilon_1
+            h_int[i * 2, offset + i * 2 + 1] = I / 2 * epsilon_1
             # a <-> a'^\dag
-            h_int[i * 2, offset + i * 2 + 1] = -I / 2 * conjugate(epsilon_2)
+            h_int[i * 2 + 1, offset + i * 2 + 1] = -I / 2 * conjugate(epsilon_2)
             # a^\dag <-> a'
-            h_int[i * 2 + 1, offset + i * 2] = I / 2 * epsilon_2
+            h_int[i * 2, offset + i * 2] = I / 2 * epsilon_2
 
         return SplitNetwork.InteractionHamiltonian(h_int)
 
@@ -916,8 +924,8 @@ class SplitNetwork:
             if g.k == Matrix.zeros(1, 2):
                 gamma_i = 0
 
-            eqns.append(-aout + ain - sympy.sqrt(gamma_i) * ap)
-            eqns.append(-aoutd + aind - sympy.sqrt(gamma_i) * apd)
+            eqns.append(-aout + ain - sympy.sqrt(2 * gamma_i) * ap)
+            eqns.append(-aoutd + aind - sympy.sqrt(2 * gamma_i) * apd)
 
         return Matrix(eqns)
 
@@ -961,8 +969,22 @@ class SplitNetwork:
         # add the input-output equations
         return SplitNetwork.FrequencyDomainEqns(Matrix(sympy.BlockMatrix([[eqns], [self.input_output_eqns], [_series]])))
 
+    @property
+    def aux_coupling_constants(self) -> List[sympy.Symbol]:
+        """
+        Return a list of the Sympy symbols use for the coupling constants for the auxiliary modes.
 
-def split_system(open_osc: SLH):
+        Examples:
+            >>> from sympy import symbols
+            >>> s = symbols('s')
+            >>> gamma_f, omega_s = symbols('gamma_f omega_s', real=True, positive=True)
+            >>> network = tf2network((s**2 + s * gamma_f + omega_s**2) / (s**2 - s * gamma_f + omega_s**2))
+            >>> gamma_1, gamma_2 = network.aux_coupling_constants
+        """
+        return list(map(lambda i: Symbol(f'gamma_{i + 1}', positive=True, real=True), range(len(self.gs))))
+
+
+def split_system(open_osc: SLH) -> SplitNetwork:
     """
     Split n degree of freedom open oscillator into n one degree of freedom open oscillators and a direct interaction
     Hamiltonian matrix.
@@ -973,7 +995,7 @@ def split_system(open_osc: SLH):
     dof = open_osc.r.shape[0] // 2
 
     if dof == 1:  # already separated
-        return [open_osc], Matrix.zeros(2, 2)
+        return SplitNetwork([open_osc], Matrix.zeros(2, 2))
 
     # get the list of 2x2 diagonal block matrices of R
     r_blocks = list(map(lambda i: open_osc.r[i:(i+2), i:(i+2)], range(0, 2 * dof, 2)))
@@ -995,7 +1017,7 @@ def split_system(open_osc: SLH):
     # construct Hamiltonian interaction matrix
     for j in range(0, dof - 1):
         for k in range(j + 1, dof):
-            h_d[(j*2):((j+1)*2), (k*2):((k+1)*2)] = open_osc.r[(k*2):((k+1)*2), (j*2):((j+1)*2)].H \
-                - 1 / (2 * I) * (k_blocks[k].H * k_blocks[j] - k_blocks[k].T * k_blocks[j].C)
+            h_d[(j*2):((j+1)*2), (k*2):((k+1)*2)] = 2 * (open_osc.r[(k*2):((k+1)*2), (j*2):((j+1)*2)].H
+                - 1 / (2 * I) * (k_blocks[k].H * k_blocks[j] - k_blocks[k].T * k_blocks[j].C))
 
     return SplitNetwork(gs, h_d)
