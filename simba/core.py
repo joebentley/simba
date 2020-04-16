@@ -828,7 +828,7 @@ class SplitNetwork:
         r"""
         Represents the interaction Hamiltonian as a Matrix in order
 
-        ..math::
+        .. math::
             `(a_1, a_1^\dagger, \dots, a_n, a_n^\dagger; a_1', a_1'^\dagger,\dots, a_n', a_n'^\dagger)`,
 
         where :math:`a_i` is the annihilation operator for the main cavity mode of the i-th system and
@@ -875,12 +875,12 @@ class SplitNetwork:
             Compute the Heisenberg equations of motion of the interacting terms (not including the Langevin equations)
             , using the Bosonic commutation relations
 
-            ..math::
+            .. math::
                 [a_i, a_j] = 0, \quad [a_i, a_j^\dagger] = \delta_{i, j},
 
             and
 
-            ..math::
+            .. math::
                 [a_i', a_j'] = 0, \quad [a_i', a_j'^\dagger] = \delta_{i, j}
 
             Returns eqns in order
