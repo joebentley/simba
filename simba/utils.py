@@ -1,6 +1,6 @@
 import simba.config as conf
 from simba.errors import DimensionError
-from sympy import Matrix
+import sympy
 
 
 def halve_matrix(mat):
@@ -32,7 +32,7 @@ def solve_matrix_eqn(eqn, x):
         eqns = list(eqn)
 
     sols = linsolve(eqns, list(x))
-    return list(map(lambda sol: Matrix(sol).reshape(*x.shape), sols))
+    return list(map(lambda sol: sympy.Matrix(sol).reshape(*x.shape), sols))
 
 
 def construct_permutation_matrix(n):
@@ -40,7 +40,7 @@ def construct_permutation_matrix(n):
     if n % 2 != 0:
         raise DimensionError("n should be even")
 
-    u = Matrix.zeros(n, n)
+    u = sympy.Matrix.zeros(n, n)
     for x in range(n // 2):
         u[x * 2, x] = 1
         u[x * 2 + 1, x + n // 2] = 1

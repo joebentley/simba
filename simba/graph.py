@@ -1,5 +1,4 @@
 
-from sympy import Matrix
 from enum import Enum
 from typing import List
 from .core import SplitNetwork
@@ -183,6 +182,7 @@ def nodes_from_dofs(gs, h_d) -> Nodes:
     :param h_d: the direct interaction Hamiltonian matrix
     :return: a `Nodes` instance
     """
+    from sympy import Matrix
 
     # TODO: distinguish between detuned cavity and tuned DPA
 

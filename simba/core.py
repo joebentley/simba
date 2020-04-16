@@ -1,10 +1,9 @@
 
 from copy import deepcopy
 from collections import namedtuple
-from typing import *
+from typing import List
 
 import sympy
-from sympy import Matrix, Symbol, fraction, ImmutableMatrix, MatrixSymbol, I
 
 from simba.utils import solve_matrix_eqn, construct_permutation_matrix, simplify
 from simba.errors import DimensionError, CoefficientError, StateSpaceError, ResultError
@@ -26,12 +25,13 @@ def is_transfer_matrix_physically_realisable(expr, d_matrix=None):
     :param expr: a sympy Matrix representing the transfer Matrix :math:`\mathbf{G}(s)`
     :param d_matrix: a sympy Matrix representing the direct-feed Matrix, defaulting to the identity matrix
     """
+    from sympy import conjugate, Symbol, Matrix
+
     j = j_matrix(expr.shape[0])
     if not d_matrix:
         d_matrix = Matrix.eye(*j.shape)
 
     s = Symbol('s')
-    from sympy import conjugate
     cond1 = simplify(expr.subs(s, -conjugate(s)).H * j * expr - j, Matrix.zeros(*j.shape))
     cond2 = simplify(d_matrix * j * d_matrix.H - j, Matrix.zeros(*j.shape))
 
@@ -110,6 +110,7 @@ class StateSpace:
     be created from modified matrices instead.
     """
     def __init__(self, a, b, c, d, *, paired_operator_form=False):
+        from sympy import ImmutableMatrix
         self.a = ImmutableMatrix(a)
         self.b = ImmutableMatrix(b)
         self.c = ImmutableMatrix(c)
@@ -159,6 +160,7 @@ class StateSpace:
 
         :return: StateSpace for the given system
         """
+        from sympy import Matrix
 
         if not len(denom) == len(numer) - 1:
             raise CoefficientError(f"Denominator coefficients list did not have length of numerator list minus one: "
@@ -195,6 +197,7 @@ class StateSpace:
 
     def to_transfer_function(self):
         """Calculate transfer function matrix for the system using the convention given by [#laplace]_."""
+        from sympy import Symbol, Matrix
         s = Symbol('s')
         return self.c * (-s * Matrix.eye(self.a.shape[0]) - self.a).inv() * self.b + self.d
 
@@ -203,8 +206,9 @@ class StateSpace:
         Extend SISO state-space to quantum MIMO state space in doubled-up ordering (see [#quantum]_).
         Returns extended `StateSpace`. Does not modify original.
         """
-        quantum_ss = deepcopy(self)
+        from sympy import ImmutableMatrix, Matrix
 
+        quantum_ss = deepcopy(self)
         quantum_ss.quantum = True
         quantum_ss.a = ImmutableMatrix(Matrix.diag(self.a, self.a.C))
         quantum_ss.b = ImmutableMatrix(Matrix.diag(self.b, self.b.C))
@@ -260,6 +264,8 @@ class StateSpace:
 
         Raise `ResultError` if there was some other unexpected error during finding T.
         """
+        from sympy import Matrix, MatrixSymbol
+
         n = self.num_degrees_of_freedom
         if n % 2 != 0:
             raise DimensionError("num_degrees_of_freedom should be even for a quantum system")
@@ -395,6 +401,8 @@ class StateSpace:
             AJ + JA^\dagger + BJB^\dagger &= 0, \\
             JC^\dagger + BJD^\dagger &= 0.
         """
+        from sympy import Matrix
+
         # reorder to paired operator form only if needed
         ss = self if self.paired_operator_form else self.reorder_to_paired_form()
         j = j_matrix(ss.num_degrees_of_freedom)
@@ -415,6 +423,8 @@ class StateSpace:
         *Note* this does not imply that the system matrices :math:`(A, B, C, D)` are physically realisable, just that
         they can be transformed to a physically realisable form.
         """
+        from sympy import Symbol, Matrix
+
         g = self.to_transfer_function()
         j = j_matrix(g.shape[0])
         s = Symbol('s')
@@ -435,7 +445,7 @@ class StateSpace:
         :math:`(S, K, R)`.
         Assume physically realisable but won't error if it's not.
         """
-        from sympy import I, Rational, BlockMatrix
+        from sympy import I, Rational, BlockMatrix, Matrix
         j = j_matrix(self.num_degrees_of_freedom)
         SKR = namedtuple('SKR', ['s', 'k', 'r'])
         ss = self.reorder_to_paired_form()
@@ -509,7 +519,7 @@ def j_matrix(num_dof):
     """
     if num_dof % 2 != 0:
         raise DimensionError("num_dof should be even for a quantum system")
-    return Matrix.diag([1, -1] * (num_dof // 2))
+    return sympy.Matrix.diag([1, -1] * (num_dof // 2))
 
 
 def transfer_function_to_coeffs(expr, flip_s=True):
@@ -530,6 +540,7 @@ def transfer_function_to_coeffs(expr, flip_s=True):
     :param flip_s: if True, set s to -s, that is use the Laplace convention defined in [#laplace]_
     :return: ``Coefficients`` namedtuple with fields: ``(numer=[b_n, ..., b_0], denom=[a_n, ..., a_1])``
     """
+    from sympy import Symbol, fraction
     s = Symbol('s')
     if flip_s:
         expr = expr.subs(s, -s)  # transform to our Laplace convention
@@ -582,6 +593,7 @@ def concat(a, b):
     :param b: `SLH` object representing generalised open oscillator :math:`G_2`
     :return: `SLH` object representing concatenation of both
     """
+    from sympy import Matrix
     s = Matrix.diag(a.s, b.s)
     k = Matrix.diag(a.k, b.k)
     r = Matrix.diag(a.r, b.r)
@@ -624,6 +636,7 @@ class SLH:
 
     def __init__(self, s, k, r, x0):
         """Construct generalised open oscillator :math:`G = (S, L, H)`."""
+        from sympy import ImmutableMatrix
         self.s = ImmutableMatrix(s)
         self.k = ImmutableMatrix(k)
         self.r = ImmutableMatrix(r)
@@ -635,7 +648,7 @@ class SLH:
 
         # check if S is identity, if so display identity matrix instead
         n = self.s.shape[0]
-        if self.s == Matrix.eye(n):
+        if self.s == sympy.Matrix.eye(n):
             s_latex_string = r"I_{%d\times%d}" % (n, n)
         else:
             s_latex_string = latex(self.s)
@@ -681,7 +694,7 @@ def interaction_hamiltonian_from_linear_coupling_operator(l_operator):
 
     from sympy import I, simplify, BlockMatrix
     states = make_complex_ladder_state(l_operator.shape[1], "u")
-    h_int = I * Matrix(BlockMatrix([[l_operator.H, -l_operator.T]])) * states
+    h_int = I * sympy.Matrix(BlockMatrix([[l_operator.H, -l_operator.T]])) * states
     if h_int.shape != (1, 1):
         raise DimensionError(f"Expected interaction Hamiltonian to be scalar, instead: {h_int.shape}")
     return simplify(h_int[0, 0])
@@ -742,6 +755,7 @@ def make_complex_ladder_state(num_dofs, symbol='a'):
 
     If ``num_dofs == 1`` then just returns :math:`(a, a^\dagger)^T`
     """
+    from sympy import Symbol, Matrix
     states = []
 
     if num_dofs == 1:
@@ -769,7 +783,7 @@ class SplitNetwork:
     freedom which is adiabatically eliminated.
     """
 
-    def __init__(self, gs: List[SLH], h_d: Matrix):
+    def __init__(self, gs: List[SLH], h_d: sympy.Matrix):
         self.gs = gs
         self.h_d = h_d
 
@@ -788,14 +802,14 @@ class SplitNetwork:
         return str(tuple(self))
 
     @property
-    def states(self) -> Matrix:
+    def states(self) -> sympy.Matrix:
         """Return the state symbols for the main and auxiliary mode for the entire network."""
         states = make_complex_ladder_state(len(self.gs), 'a')
         aux_states = make_complex_ladder_state(len(self.gs), 'a\'')
-        return Matrix(sympy.BlockMatrix([[states], [aux_states]]))
+        return sympy.Matrix(sympy.BlockMatrix([[states], [aux_states]]))
 
     @property
-    def input_output_symbols(self) -> Matrix:
+    def input_output_symbols(self) -> sympy.Matrix:
         """Return the symbols for the input and output fields."""
         symbols = []
 
@@ -808,7 +822,7 @@ class SplitNetwork:
             symbols.append(aout)
             symbols.append(aoutd)
 
-        return Matrix(symbols)
+        return sympy.Matrix(symbols)
 
     class InteractionHamiltonian:
         r"""
@@ -821,7 +835,7 @@ class SplitNetwork:
         :math:`a_i'` is for the corresponding auxiliary mode.
         """
 
-        def __init__(self, h: Matrix):
+        def __init__(self, h: sympy.Matrix):
             self.h = h
 
         @property
@@ -830,15 +844,16 @@ class SplitNetwork:
             return (x.H * self.h * x)[0, 0]
 
         @property
-        def states(self) -> Matrix:
+        def states(self) -> sympy.Matrix:
             """Return the state symbols for the main and auxiliary modes for the network."""
             states = make_complex_ladder_state(self.h.rows // 4, 'a')
             aux_states = make_complex_ladder_state(self.h.rows // 4, 'a\'')
-            return Matrix(sympy.BlockMatrix([[states], [aux_states]]))
+            return sympy.Matrix(sympy.BlockMatrix([[states], [aux_states]]))
 
         @property
-        def dynamical_matrix(self) -> Matrix:
+        def dynamical_matrix(self) -> sympy.Matrix:
             """Compute dynamical matrix as shown in ``notes/eqns-of-motion-from-hamiltonian-matrix.pdf``."""
+            from sympy import Matrix, I
             n = self.h.rows // 2
             j_1 = Matrix([[0, 1], [-1, 0]])
             j_mat = Matrix(sympy.BlockDiagMatrix(*([j_1] * n)))
@@ -855,7 +870,7 @@ class SplitNetwork:
             return a_mat
 
         @property
-        def equations_of_motion(self) -> Matrix:
+        def equations_of_motion(self) -> sympy.Matrix:
             r"""
             Compute the Heisenberg equations of motion of the interacting terms (not including the Langevin equations)
             , using the Bosonic commutation relations
@@ -885,8 +900,7 @@ class SplitNetwork:
         Compute the interaction Hamiltonian between internal degrees of freedom in the network, not including
         the external continuum fields.
         """
-
-        from sympy import BlockDiagMatrix, sqrt, conjugate
+        from sympy import BlockDiagMatrix, sqrt, conjugate, Matrix, Symbol, I
 
         h_int = Matrix(BlockDiagMatrix(self.h_d, Matrix.zeros(*self.h_d.shape)))
 
@@ -910,8 +924,10 @@ class SplitNetwork:
         return SplitNetwork.InteractionHamiltonian(h_int)
 
     @property
-    def input_output_eqns(self) -> Matrix:
+    def input_output_eqns(self) -> sympy.Matrix:
         """Calculate the input-output equations for the auxiliary fields as column vector."""
+        from sympy import Matrix, Symbol
+
         eqns = []
 
         for i, g in enumerate(self.gs):
@@ -931,7 +947,7 @@ class SplitNetwork:
 
     class FrequencyDomainEqns:
         """Used to manage results of `SplitNetwork.frequency_domain_eqns`."""
-        def __init__(self, eqns: Matrix):
+        def __init__(self, eqns: sympy.Matrix):
             self.eqns = eqns
 
         def solve(self, symbols: List):
@@ -940,6 +956,7 @@ class SplitNetwork:
     @property
     def frequency_domain_eqns(self) -> FrequencyDomainEqns:
         """Return all the equations in frequency domain."""
+        from sympy import Matrix, Symbol
         s = Symbol('s', real=False)
         x = self.states
         eqns = self.interaction_hamiltonian.equations_of_motion + s * x
@@ -981,7 +998,7 @@ class SplitNetwork:
             >>> network = tf2network((s**2 + s * gamma_f + omega_s**2) / (s**2 - s * gamma_f + omega_s**2))
             >>> gamma_1, gamma_2 = network.aux_coupling_constants
         """
-        return list(map(lambda i: Symbol(f'gamma_{i + 1}', positive=True, real=True), range(len(self.gs))))
+        return list(map(lambda i: sympy.Symbol(f'gamma_{i + 1}', positive=True, real=True), range(len(self.gs))))
 
 
 def split_system(open_osc: SLH) -> SplitNetwork:
@@ -992,6 +1009,8 @@ def split_system(open_osc: SLH) -> SplitNetwork:
     :param open_osc: the n degree of freedom open oscillator to split
     :return: a `SplitNetwork` which represents a tuple of ([G_1, ..., G_n], H^d)
     """
+    from sympy import Matrix, I
+
     dof = open_osc.r.shape[0] // 2
 
     if dof == 1:  # already separated
