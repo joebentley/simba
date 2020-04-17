@@ -235,7 +235,16 @@ def nodes_from_network(network: SplitNetwork) -> Nodes:
 
 
 def transfer_function_to_graph(tf, filename, *, layout='neato'):
-    """Directly convert SISO transfer function to graph."""
+    """
+    Directly convert SISO transfer function to graph.
+
+    Examples:
+        >>>from sympy import symbols
+        >>>s = symbols('s')
+        >>>gamma = symbols('gamma', real=True, positive=True)
+        >>>tf = (s - gamma) / (s + gamma)
+        >>>transfer_function_to_graph(tf, 'unstable-filter.pdf')
+    """
     from simba import transfer_function_to_state_space, split_system
 
     ss = transfer_function_to_state_space(tf).extended_to_quantum().to_physically_realisable()

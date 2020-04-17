@@ -230,7 +230,6 @@ class StateSpace:
         .. math::
             (a_1, a_1^\dagger; a_2, a_2^\dagger; \dots; a_n, a_n^\dagger)^T,
 
-
         Does nothing if self.paired_operator_form is True
 
         :return: StateSpace in paired up form.
@@ -257,8 +256,6 @@ class StateSpace:
     def find_transformation_to_physically_realisable(self):
         """
         Return the :math:`T` matrix that transforms the state space into a physically realisable one.
-
-        TODO: needs a bit of testing
 
         Raise `StateSpaceError` if system is not possible to physically realise.
 
