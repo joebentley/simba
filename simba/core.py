@@ -1,7 +1,6 @@
 
 from copy import deepcopy
-from collections import namedtuple
-from typing import List
+from typing import List, NamedTuple
 
 import sympy
 
@@ -12,7 +11,7 @@ import simba.config as config
 """State-spaces and transfer functions"""
 
 
-def is_transfer_matrix_physically_realisable(expr, d_matrix=None):
+def is_transfer_matrix_physically_realisable(expr: sympy.Matrix, d_matrix: sympy.Matrix = None) -> bool:
     r"""
     Check if transfer matrix :math:`\mathbf{G}(s)` given by ``expr`` and direct-feed matrix ``d_matrix``
     is possible to physically realise by the conditions given in [transfer-function]_, i.e. that it obeys,
@@ -38,27 +37,27 @@ def is_transfer_matrix_physically_realisable(expr, d_matrix=None):
     return cond1 and cond2
 
 
-def transfer_func_coeffs_to_state_space(numer, denom):
+def transfer_func_coeffs_to_state_space(numer: List, denom: List) -> 'StateSpace':
     """See `StateSpace.from_transfer_function_coeffs`."""
     return StateSpace.from_transfer_function_coeffs(numer, denom)
 
 
-def transfer_function_to_state_space(expr):
+def transfer_function_to_state_space(expr: sympy.Expr) -> 'StateSpace':
     """See `StateSpace.from_transfer_function`."""
     return StateSpace.from_transfer_function(expr)
 
 
-def tf2ss(expr):
+def tf2ss(expr: sympy.Expr) -> 'StateSpace':
     """See `transfer_function_to_state_space`"""
     return transfer_function_to_state_space(expr)
 
 
-def transfer_function_to_realisable_state_space(expr):
+def transfer_function_to_realisable_state_space(expr: sympy.Expr) -> 'StateSpace':
     """Convert given transfer function to physically realisable state space if possible."""
     return transfer_function_to_state_space(expr).extended_to_quantum().to_physically_realisable()
 
 
-def tf2rss(expr):
+def tf2rss(expr: sympy.Expr) -> 'StateSpace':
     """See `transfer_function_to_realisable_state_space`"""
     return transfer_function_to_realisable_state_space(expr)
 
@@ -134,7 +133,7 @@ class StateSpace:
         self.paired_operator_form = paired_operator_form  # set if the StateSpace is in `paired operator form`
 
     @classmethod
-    def from_transfer_function_coeffs(cls, numer, denom):
+    def from_transfer_function_coeffs(cls, numer: List, denom: List) -> 'StateSpace':
         r"""
         Return the `SISO` controllable canonical form state space for the given list of numerators
         and denominators of a pole-zero form transfer function, given in order of ascending powers, assuming complex
@@ -191,17 +190,17 @@ class StateSpace:
         return cls(a, b, c, d)
 
     @classmethod
-    def from_transfer_function(cls, expr):
+    def from_transfer_function(cls, expr: sympy.Expr) -> 'StateSpace':
         """Call `from_transfer_function_coeffs` passing the expression to `transfer_function_to_coeffs`."""
         return cls.from_transfer_function_coeffs(*transfer_function_to_coeffs(expr))
 
-    def to_transfer_function(self):
+    def to_transfer_function(self) -> sympy.Expr:
         """Calculate transfer function matrix for the system using the convention given by [#laplace]_."""
         from sympy import Symbol, Matrix
         s = Symbol('s')
         return self.c * (-s * Matrix.eye(self.a.shape[0]) - self.a).inv() * self.b + self.d
 
-    def extended_to_quantum(self):
+    def extended_to_quantum(self) -> 'StateSpace':
         """
         Extend SISO state-space to quantum MIMO state space in doubled-up ordering (see [#quantum]_).
         Returns extended `StateSpace`. Does not modify original.
@@ -217,7 +216,7 @@ class StateSpace:
         quantum_ss.paired_operator_form = False
         return quantum_ss
 
-    def reorder_to_paired_form(self):
+    def reorder_to_paired_form(self) -> 'StateSpace':
         r"""
         Return a new StateSpace with the system matrices reordered so that the state vectors, inputs, and outputs are
         converted from doubled-up form,
@@ -253,7 +252,7 @@ class StateSpace:
         return StateSpace(u*self.a*u.inv(), u*self.b*u_i.inv(), u_o*self.c*u.inv(), u_o*self.d*u_i.inv(),
                           paired_operator_form=True)
 
-    def find_transformation_to_physically_realisable(self):
+    def find_transformation_to_physically_realisable(self) -> sympy.Matrix:
         """
         Return the :math:`T` matrix that transforms the state space into a physically realisable one.
 
@@ -356,7 +355,7 @@ class StateSpace:
             assert simplify(p * j * p.H - x, Matrix.zeros(*x.shape)), "Result not recovered as expected!"
         return simplify(p)
 
-    def to_physically_realisable(self):
+    def to_physically_realisable(self) -> 'StateSpace':
         """
         Return copy of state space transformed to a physically realisable state-space, or just return ``self`` if
         already physically realisable.
@@ -390,7 +389,7 @@ class StateSpace:
         return ss
 
     @property
-    def is_physically_realisable(self):
+    def is_physically_realisable(self) -> bool:
         r"""
         Test physical realisability conditions using the `paired operator form` of the state-space.
 
@@ -412,7 +411,7 @@ class StateSpace:
         cond2 = simplify(realisability2, Matrix.zeros(*realisability2.shape))
         return cond1 and cond2
 
-    def raise_error_if_not_possible_to_realise(self):
+    def raise_error_if_not_possible_to_realise(self) -> None:
         r"""
         Raises `StateSpaceError` if system cannot be physically realised according to the conditions given in
         `is_transfer_matrix_physically_realisable`.
@@ -436,7 +435,7 @@ class StateSpace:
         if cond2 != Matrix.zeros(*j.shape):
             raise StateSpaceError(f"Not possible to realise: {cond2} != 0")
 
-    def to_skr(self):
+    def to_skr(self) -> 'SKR':
         """
         Convert state space to SLH form as discussed in [synthesis]_, specifically returning the matrices
         :math:`(S, K, R)`.
@@ -444,7 +443,6 @@ class StateSpace:
         """
         from sympy import I, Rational, BlockMatrix, Matrix
         j = j_matrix(self.num_degrees_of_freedom)
-        SKR = namedtuple('SKR', ['s', 'k', 'r'])
         ss = self.reorder_to_paired_form()
 
         # permutation matrix from (a_1, a_1^d; ...; a_n, a_n^d) -> (a_1, ..., a_n; a_1^d, ..., a_n^d)
@@ -454,58 +452,58 @@ class StateSpace:
         # TODO: d should be different here, see my paper
         return SKR(ss.d, identity_block * permutation_matrix * ss.c, I * Rational(1, 4) * (j * ss.a - ss.a.H * j))
 
-    def to_slh(self, symbol='a'):
+    def to_slh(self, symbol='a') -> 'SLH':
         """Create `StateSpace.to_skr` returning a `SLH` object using given symbol name ``symbol``, defaulting to 'a'."""
         s, k, r = self.to_skr()
         x0 = make_complex_ladder_state(r.shape[0] // 2, symbol)
         return SLH(s, k, r, x0)
 
     @property
-    def num_degrees_of_freedom(self):
+    def num_degrees_of_freedom(self) -> int:
         """Returns num degrees of freedom if classical, or 2 * num degrees of freedom if quantum."""
         return self.a.shape[0]
 
     @property
-    def num_inputs(self):
+    def num_inputs(self) -> int:
         """Returns num inputs if classical, or 2 * num inputs if quantum."""
         return self.b.shape[1]
 
     @property
-    def num_outputs(self):
+    def num_outputs(self) -> int:
         """Returns num outputs if classical, or 2 * num outputs if quantum."""
         return self.c.shape[0]
 
-    def pprint(self):
+    def pprint(self) -> None:
         """Pretty print the system matrices for debug or interactive programming purposes."""
         print(self)
 
-    def _repr_latex_(self):
+    def _repr_latex_(self) -> str:
         """Display `StateSpace` in Jupyter notebook as LaTeX."""
         from sympy.printing.latex import latex
         lb = r"\\" if self.num_degrees_of_freedom > 4 else r",\,"  # only break lines if matrices are large
         return f"$$\\displaystyle A={latex(self.a)}{lb}B={latex(self.b)}{lb}C={latex(self.c)}{lb}D={latex(self.d)}$$"
 
-    def __iter__(self):
+    def __iter__(self) -> iter:
         """Returns iterator holding tuple with the four system matrices. Use for unpacking."""
         return iter((self.a, self.b, self.c, self.d))
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Equality for state spaces means that all the ABCD matrices are equal and both are or aren't quantum."""
         return self.a == other.a and self.b == other.b and self.c == other.c and self.d == other.d
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Prettify the equation."""
         from sympy.printing.pretty import pretty
         return f"{pretty(self.a)}\n{pretty(self.b)}\n{pretty(self.c)}\n{pretty(self.d)}\n"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{repr(self.a)}\n{repr(self.b)}\n{repr(self.c)}\n{repr(self.d)}\n"
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(tuple(self))
 
 
-def j_matrix(num_dof):
+def j_matrix(num_dof: int) -> sympy.Matrix:
     r"""
     Return quantum :math:`J` matrix for a `paired operator form` `StateSpace` with given ``num_dof``,
 
@@ -519,7 +517,7 @@ def j_matrix(num_dof):
     return sympy.Matrix.diag([1, -1] * (num_dof // 2))
 
 
-def transfer_function_to_coeffs(expr, flip_s=True):
+def transfer_function_to_coeffs(expr: sympy.Expr, flip_s=True) -> 'Coefficients':
     """
     Extract transfer function coefficients from the given expression which is a function of frequency :math:`s` and a
     ratio of two polynomials.
@@ -535,7 +533,7 @@ def transfer_function_to_coeffs(expr, flip_s=True):
 
     :param expr: ratio of two polynomials in :math:`s`
     :param flip_s: if True, set s to -s, that is use the Laplace convention defined in [#laplace]_
-    :return: ``Coefficients`` namedtuple with fields: ``(numer=[b_n, ..., b_0], denom=[a_n, ..., a_1])``
+    :return: `Coefficients` instance
     """
     from sympy import Symbol, fraction
     s = Symbol('s')
@@ -560,14 +558,19 @@ def transfer_function_to_coeffs(expr, flip_s=True):
     denom_coeffs = denom_coeffs[:-1]  # drop last element of denoms
     assert len(denom_coeffs) == len(numer_coeffs) - 1, "sanity check on lengths failed"
 
-    Coefficients = namedtuple('Coefficients', ['numer', 'denom'])
     return Coefficients(numer=numer_coeffs, denom=denom_coeffs)
+
+
+class Coefficients(NamedTuple):
+    """Represents the transfer function coefficients as returned by `transfer_function_to_coeffs`"""
+    numer: List
+    denom: List
 
 
 """SLH formalism"""
 
 
-def concat(a, b):
+def concat(a: 'SLH', b: 'SLH') -> 'SLH':
     r"""
     Concatenate two `SLH` systems using the concatenation product. [synthesis]_
 
@@ -620,6 +623,13 @@ def series(g_to, g_from):
     raise NotImplementedError("series(g_to, g_from) is not yet implemented.")
 
 
+class SKR(NamedTuple):
+    """Represents SKR matrices as returned by `StateSpace.to_skr`"""
+    s: sympy.Matrix
+    k: sympy.Matrix
+    r: sympy.Matrix
+
+
 class SLH:
     """
     Represents a generalised open oscillator in the SLH formalism. [synthesis]_
@@ -639,7 +649,7 @@ class SLH:
         self.r = ImmutableMatrix(r)
         self.x0 = ImmutableMatrix(x0)
 
-    def _repr_latex_(self):
+    def _repr_latex_(self) -> str:
         """Display `SLH` in Jupyter notebook as LaTeX."""
         from sympy.printing.latex import latex
 
@@ -655,7 +665,7 @@ class SLH:
         return r"$$\displaystyle \left(%s, %s %s, \frac{1}{2} %s %s %s\right)$$"\
                % (s_latex_string, latex(self.k), x0, x0d, latex(self.r), x0)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"(S = {repr(self.s)}, K = {repr(self.k)}, R = {repr(self.r)})"
 
     def split(self) -> 'SplitNetwork':
@@ -671,11 +681,11 @@ class SLH:
         return interaction_hamiltonian_from_linear_coupling_operator(self.k * self.x0)
 
 
-def interaction_hamiltonian_from_k_matrix(k_matrix):
+def interaction_hamiltonian_from_k_matrix(k_matrix: sympy.Matrix) -> sympy.Expr:
     return interaction_hamiltonian_from_linear_coupling_operator(linear_coupling_operator_from_k_matrix(k_matrix))
 
 
-def interaction_hamiltonian_from_linear_coupling_operator(l_operator):
+def interaction_hamiltonian_from_linear_coupling_operator(l_operator: sympy.Matrix) -> sympy.Expr:
     r"""
     Calculate the idealised interaction hamiltonian for the given linear coupling operator.
 
@@ -697,7 +707,7 @@ def interaction_hamiltonian_from_linear_coupling_operator(l_operator):
     return simplify(h_int[0, 0])
 
 
-def linear_coupling_operator_from_k_matrix(k_matrix, symbol='a'):
+def linear_coupling_operator_from_k_matrix(k_matrix: sympy.Matrix, symbol: str = 'a') -> sympy.Matrix:
     r"""
     Calculate symbolic linear coupling operator from K matrix assuming `paired operator form`.
 
@@ -717,7 +727,7 @@ def linear_coupling_operator_from_k_matrix(k_matrix, symbol='a'):
     return k_matrix * states
 
 
-def hamiltonian_from_r_matrix(r_matrix, symbol='a'):
+def hamiltonian_from_r_matrix(r_matrix: sympy.Matrix, symbol: str = 'a') -> sympy.Expr:
     r"""
     Calculate symbolic internal Hamiltonian from R matrix assuming `paired operator form`.
 
@@ -742,7 +752,7 @@ def hamiltonian_from_r_matrix(r_matrix, symbol='a'):
     return hamiltonian[0, 0]
 
 
-def make_complex_ladder_state(num_dofs, symbol='a'):
+def make_complex_ladder_state(num_dofs: int, symbol: str = 'a') -> sympy.Matrix:
     r"""
     Return matrix of complex ladder operators with ``2 * num_dofs`` elements.
 

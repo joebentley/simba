@@ -1,6 +1,6 @@
 
 from enum import Enum
-from typing import List
+from typing import List, Set
 from .core import SplitNetwork
 
 
@@ -50,19 +50,19 @@ class Node:
         self.connections = []
         self.self_connections = set()
 
-    def get_connections_to(self, index) -> set:
+    def get_connections_to(self, index: int) -> set:
         """Filter for *set* of `ConnectionType` to the `Node` with given index."""
         return set(map(lambda conn: conn.connection_type, filter(lambda conn: conn.index == index, self.connections)))
 
     @property
-    def is_series_connected(self):
+    def is_series_connected(self) -> bool:
         """
         If the auxiliary mode is not coupled to the main mode, then the main mode is not connected to the series
         connections, so we can ignore it in the series connections.
         """
         return len(self.self_connections) != 0
 
-    def __str__(self):
+    def __str__(self) -> str:
         self_conns_str = "-> self via "
         if ConnectionType.BS in self.self_connections:
             self_conns_str += "BS"
@@ -77,7 +77,7 @@ class Node:
         return self_conns_str + '\n' + connections_str
 
 
-def _arrow_head_from_connections_set(connections):
+def _arrow_head_from_connections_set(connections: Set[ConnectionType]) -> str:
     """Determine arrowhead from set of `ConnectionType`."""
     arrow_head = None
     if ConnectionType.SQZ in connections and ConnectionType.BS in connections:
@@ -93,7 +93,7 @@ class Nodes:
     """
     List of Nodes connected in series, indexes starting at zero.
     """
-    def __init__(self, nodes: List[Node]=None):
+    def __init__(self, nodes: List[Node] = None):
         self.nodes = nodes or []
 
     def __iter__(self):

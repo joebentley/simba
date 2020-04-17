@@ -3,7 +3,7 @@ from simba.errors import DimensionError
 import sympy
 
 
-def halve_matrix(mat):
+def halve_matrix(mat: sympy.Matrix):
     """
     Halve the dimensions of the given matrix, truncating where necessary.
 
@@ -40,7 +40,7 @@ def solve_matrix_eqn(eqn, x):
     return list(map(lambda sol: sympy.Matrix(sol).reshape(*x.shape), sols))
 
 
-def construct_permutation_matrix(n):
+def construct_permutation_matrix(n: int) -> sympy.Matrix:
     """Construct permutation matrix that reorders the elements so that (1, 2, 3, 11, 22, 33) -> (1, 11, 2, 22, 3, 33)"""
     if n % 2 != 0:
         raise DimensionError("n should be even")
