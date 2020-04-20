@@ -77,3 +77,17 @@ def simplify(expr, rhs=None):
             return simplify(expr) == rhs
         else:
             return simplify(expr)
+
+
+def adiabatically_eliminate(expr: sympy.Expr, gamma: sympy.Symbol) -> sympy.Expr:
+    """
+    Eliminate terms from ``expr`` which are very small compared to ``gamma`` which is much larger than
+    any other frequency.
+    """
+    from sympy import fraction, Symbol
+
+    numer, denom = fraction(expr)
+    epsilon = Symbol('epsilon')
+    numer = (numer / gamma).subs(gamma, 1 / epsilon).expand().subs(epsilon, 0)
+    denom = (denom / gamma).subs(gamma, 1 / epsilon).expand().subs(epsilon, 0)
+    return numer / denom

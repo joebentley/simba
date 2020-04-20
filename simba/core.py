@@ -953,12 +953,27 @@ class SplitNetwork:
         return Matrix(eqns)
 
     class FrequencyDomainEqns:
-        """Used to manage results of `SplitNetwork.frequency_domain_eqns`."""
-        def __init__(self, eqns: sympy.Matrix):
-            self.eqns = eqns
+        """
+        Used to manage results of `SplitNetwork.frequency_domain_eqns`.
 
-        def solve(self, symbols: List):
-            return sympy.linsolve(list(self.eqns), symbols)
+        Attributes:
+            - ``eqns`` is a column matrix of equations equal to 0
+            - ``states`` is a column matrix of main, auxiliary, and input-output state symbols (in that order)
+        """
+        def __init__(self, eqns: sympy.Matrix, states: sympy.Matrix):
+            self.eqns = eqns
+            self.states = states
+
+        def solve(self, states: List[int]) -> List[sympy.Expr]:
+            """Solve eqns for given states (e.g. input states), returned as a tuple of equations."""
+            # remove the state from the symbols list
+            _states = list(self.states)
+
+            for state in sorted(states, reverse=True):
+                del _states[state]
+
+            # get all the solutions
+            return list(sympy.linsolve(list(self.eqns), _states).args[0])
 
     @property
     def frequency_domain_eqns(self) -> FrequencyDomainEqns:
@@ -992,8 +1007,9 @@ class SplitNetwork:
 
         # add the input-output equations
         m = Matrix(sympy.BlockMatrix([[eqns], [self.input_output_eqns], [_series]]))
-
-        return SplitNetwork.FrequencyDomainEqns(m)
+        # add the input-output symbols
+        x = Matrix(sympy.BlockMatrix([[self.states], [self.input_output_symbols]]))
+        return SplitNetwork.FrequencyDomainEqns(m, x)
 
     @property
     def aux_coupling_constants(self) -> List[sympy.Symbol]:

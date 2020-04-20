@@ -8,7 +8,7 @@ from simba.core import \
      concat, SLH, make_complex_ladder_state, split_system)
 from simba.errors import DimensionError, CoefficientError, StateSpaceError
 from simba.graph import nodes_from_dofs, transfer_function_to_graph
-
+from simba.utils import adiabatically_eliminate
 
 # Auto-set parameters
 import simba.config
