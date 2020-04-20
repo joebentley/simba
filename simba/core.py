@@ -1,6 +1,6 @@
 
 from copy import deepcopy
-from typing import List, NamedTuple
+from typing import List, NamedTuple, Dict, Optional
 
 import sympy
 
@@ -964,22 +964,54 @@ class SplitNetwork:
             self.eqns = eqns
             self.states = states
 
-        def solve(self, states: List[int]) -> List[sympy.Expr]:
-            """Solve eqns for given states (e.g. input states), returned as a tuple of equations."""
+        def get_symbol(self, name: str) -> Optional[sympy.Symbol]:
+            r"""
+            Get symbol from self.states with given name.
+
+            To get a conjugated variable, e.g. :math:`a_1^\dagger`, use ``conjugate(a_1)``.
+            """
+            if not isinstance(name, str):
+                raise TypeError("name must be a string")
+
+            for symbol in self.states:
+                if str(symbol) == name:
+                    return symbol
+
+            return None
+
+        def get_symbols(self, names: List[str]) -> List[sympy.Symbol]:
+            """Same as `get_symbol` but takes and returns a list."""
+            return list(map(self.get_symbol, names))
+
+        def solve(self, states: List[sympy.Symbol]) -> Dict[sympy.Symbol, sympy.Expr]:
+            r"""
+            Solve eqns for given states (e.g. input states :math:`ain_1, ain_1^\dagger`),
+            returned as a dictionary of symbols to equations.
+
+            To enter a conjugated variable, e.g. :math:`a_1^\dagger`, use ``conjugate(a_1)``.
+
+            :param states, list of variables to solve for
+            :returns dictionary of symbols to solutions
+            """
             # remove the state from the symbols list
             _states = list(self.states)
-
-            for state in sorted(states, reverse=True):
-                del _states[state]
+            for symbol in states:
+                _states.remove(symbol)
 
             # get all the solutions
-            return list(sympy.linsolve(list(self.eqns), _states).args[0])
+            solns = sympy.linsolve(list(self.eqns), _states)
+            if solns == sympy.EmptySet:
+                raise ResultError("No solution found")
+
+            # get soln from the FiniteSet
+            solns = solns.args[0]
+            return dict(zip(_states, solns))
 
     @property
     def frequency_domain_eqns(self) -> FrequencyDomainEqns:
         """Return all the equations in frequency domain."""
         from sympy import Matrix, Symbol
-        s = Symbol('s', real=False)
+        s = Symbol('s')
         x = self.states
         eqns = self.interaction_hamiltonian.equations_of_motion + s * x
 
