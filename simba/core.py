@@ -991,7 +991,9 @@ class SplitNetwork:
         _series = Matrix(_series)
 
         # add the input-output equations
-        return SplitNetwork.FrequencyDomainEqns(Matrix(sympy.BlockMatrix([[eqns], [self.input_output_eqns], [_series]])))
+        m = Matrix(sympy.BlockMatrix([[eqns], [self.input_output_eqns], [_series]]))
+
+        return SplitNetwork.FrequencyDomainEqns(m)
 
     @property
     def aux_coupling_constants(self) -> List[sympy.Symbol]:
