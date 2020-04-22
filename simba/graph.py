@@ -105,7 +105,7 @@ class Nodes:
     def __str__(self):
         s = ""
         for i, node in enumerate(self.nodes):
-            s += f"node {i}\n{str(node)}"
+            s += f"node {i + 1}\n{str(node)}"
         return s
 
     def as_graphviz_agraph(self):
@@ -125,17 +125,17 @@ class Nodes:
             elif node.internal == Internal.ALL:
                 node_shape = 'star'
 
-            g.add_node(str(i), shape=node_shape)
+            g.add_node(str(i + 1), shape=node_shape)
 
             # determine self connection shapes
             if len(node.self_connections) != 0:
-                g.add_node(f"{i}'", shape=node_shape)
-                g.add_node(str(i), shape='circle')  # reset main node shape
+                g.add_node(f"{i + 1}'", shape=node_shape)
+                g.add_node(str(i + 1), shape='circle')  # reset main node shape
 
                 arrow_head = _arrow_head_from_connections_set(node.self_connections)
 
                 if arrow_head is not None:
-                    g.add_edge(str(i), f"{i}'", arrowtail=arrow_head, arrowhead=arrow_head, dir='both')
+                    g.add_edge(str(i + 1), f"{i + 1}'", arrowtail=arrow_head, arrowhead=arrow_head, dir='both')
 
         # add series connection between each node if series connected
         first_connected = None
@@ -155,7 +155,7 @@ class Nodes:
             last_connected = first_connected
 
         for i in range(0, len(connection_list) - 1):
-            g.add_edge(str(connection_list[i]) + "'", str(connection_list[i + 1]) + "'",
+            g.add_edge(str(connection_list[i] + 1) + "'", str(connection_list[i + 1] + 1) + "'",
                        'series', arrowtail='none', arrowhead='normal', dir='both')
 
         # add other connections between each node
@@ -167,17 +167,17 @@ class Nodes:
 
                 if arrow_head is not None:
                     # add edge depending on whether or not edge already exists in that direction
-                    if not g.has_edge(str(i), str(other)):
-                        g.add_edge(str(i), str(other), 'interaction', arrowtail=arrow_head, arrowhead=arrow_head, dir='both')
+                    if not g.has_edge(str(i + 1), str(other + 1)):
+                        g.add_edge(str(i + 1), str(other + 1), 'interaction', arrowtail=arrow_head, arrowhead=arrow_head, dir='both')
                     else:
-                        g.add_edge(str(other), str(i), 'interaction', arrowtail=arrow_head, arrowhead=arrow_head, dir='both')
+                        g.add_edge(str(other + 1), str(i + 1), 'interaction', arrowtail=arrow_head, arrowhead=arrow_head, dir='both')
 
         # add input and output nodes
         g.add_node('input', shape='plaintext')
         g.add_node('output', shape='plaintext')
 
-        g.add_edge('input', str(first_connected) + "'")
-        g.add_edge(str(last_connected) + "'", 'output')
+        g.add_edge('input', str(first_connected + 1) + "'")
+        g.add_edge(str(last_connected + 1) + "'", 'output')
 
         return g
 
