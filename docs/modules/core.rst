@@ -2,6 +2,8 @@
 ``core.py``: Core features
 ==========================
 
+The core features of this library
+
 .. automodule:: simba.core
     :members:
 
