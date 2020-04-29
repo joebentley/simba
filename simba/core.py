@@ -818,25 +818,28 @@ class SplitNetwork:
     @property
     def input_output_symbols(self) -> sympy.Matrix:
         """Return the symbols for the input and output fields."""
-        symbols = []
 
-        for i in range(len(self.gs)):
-            ain, aind = make_complex_ladder_state(1, f'ain_{i + 1}')
-            aout, aoutd = make_complex_ladder_state(1, f'aout_{i + 1}')
+        # special case for one degree of freedom
+        if len(self.gs) == 1:
+            ain, aind = make_complex_ladder_state(1, f'ain')
+            aout, aoutd = make_complex_ladder_state(1, f'aout')
+            return sympy.Matrix([ain, aind, aout, aoutd])
+        else:
+            symbols = []
 
-            symbols.append(ain)
-            symbols.append(aind)
-            symbols.append(aout)
-            symbols.append(aoutd)
+            for i in range(len(self.gs)):
+                ain, aind = make_complex_ladder_state(1, f'ain_{i + 1}')
+                aout, aoutd = make_complex_ladder_state(1, f'aout_{i + 1}')
+                symbols.extend([ain, aind, aout, aoutd])
 
-        return sympy.Matrix(symbols)
+            return sympy.Matrix(symbols)
 
     class InteractionHamiltonian:
         r"""
         Represents the interaction Hamiltonian as a Matrix in order
 
         .. math::
-            `(a_1, a_1^\dagger, \dots, a_n, a_n^\dagger; a_1', a_1'^\dagger,\dots, a_n', a_n'^\dagger)`,
+            (a_1, a_1^\dagger, \dots, a_n, a_n^\dagger; a_1', a_1'^\dagger,\dots, a_n', a_n'^\dagger),
 
         where :math:`a_i` is the annihilation operator for the main cavity mode of the i-th system and
         :math:`a_i'` is for the corresponding auxiliary mode.
@@ -913,20 +916,32 @@ class SplitNetwork:
 
         offset = self.h_d.rows
 
-        for i, g in enumerate(self.gs):
-            gamma_i = Symbol(f'gamma_{i + 1}', positive=True, real=True)
-            alpha, beta = g.k
-            epsilon_1 = beta * sqrt(2 * gamma_i)
-            epsilon_2 = -conjugate(alpha * sqrt(2 * gamma_i))
+        # special case for one internal degree of freedom
+        if len(self.gs) == 1:
+            gamma = Symbol(f'gamma', positive=True, real=True)
+            alpha, beta = self.gs[0].k
+            epsilon_1 = beta * sqrt(2 * gamma)
+            epsilon_2 = -conjugate(alpha * sqrt(2 * gamma))
 
-            # a <-> a'
-            h_int[i * 2 + 1, offset + i * 2] = -I / 2 * conjugate(epsilon_1)
-            # a^\dag <-> a'^\dag
-            h_int[i * 2, offset + i * 2 + 1] = I / 2 * epsilon_1
-            # a <-> a'^\dag
-            h_int[i * 2 + 1, offset + i * 2 + 1] = -I / 2 * conjugate(epsilon_2)
-            # a^\dag <-> a'
-            h_int[i * 2, offset + i * 2] = I / 2 * epsilon_2
+            h_int[1, offset] = -I / 2 * conjugate(epsilon_1)
+            h_int[0, offset + 1] = I / 2 * epsilon_1
+            h_int[1, offset + 1] = -I / 2 * conjugate(epsilon_2)
+            h_int[0, offset] = I / 2 * epsilon_2
+        else:
+            for i, g in enumerate(self.gs):
+                gamma_i = Symbol(f'gamma_{i + 1}', positive=True, real=True)
+                alpha, beta = g.k
+                epsilon_1 = beta * sqrt(2 * gamma_i)
+                epsilon_2 = -conjugate(alpha * sqrt(2 * gamma_i))
+
+                # a <-> a'
+                h_int[i * 2 + 1, offset + i * 2] = -I / 2 * conjugate(epsilon_1)
+                # a^\dag <-> a'^\dag
+                h_int[i * 2, offset + i * 2 + 1] = I / 2 * epsilon_1
+                # a <-> a'^\dag
+                h_int[i * 2 + 1, offset + i * 2 + 1] = -I / 2 * conjugate(epsilon_2)
+                # a^\dag <-> a'
+                h_int[i * 2, offset + i * 2] = I / 2 * epsilon_2
 
         return SplitNetwork.InteractionHamiltonian(h_int)
 
@@ -937,18 +952,27 @@ class SplitNetwork:
 
         eqns = []
 
-        for i, g in enumerate(self.gs):
-            ap, apd = make_complex_ladder_state(1, f'a\'_{i + 1}')
-            ain, aind = make_complex_ladder_state(1, f'ain_{i + 1}')
-            aout, aoutd = make_complex_ladder_state(1, f'aout_{i + 1}')
-            gamma_i = Symbol(f'gamma_{i + 1}', positive=True, real=True)
+        # special case for one internal degree of freedom
+        if len(self.gs) == 1:
+            ap, apd = make_complex_ladder_state(1, f'a\'')
+            ain, aind = make_complex_ladder_state(1, f'ain')
+            aout, aoutd = make_complex_ladder_state(1, f'aout')
+            gamma = Symbol(f'gamma', positive=True, real=True)
+            eqns.append(-aout + ain - sympy.sqrt(2 * gamma) * ap)
+            eqns.append(-aoutd + aind - sympy.sqrt(2 * gamma) * apd)
+        else:
+            for i, g in enumerate(self.gs):
+                ap, apd = make_complex_ladder_state(1, f'a\'_{i + 1}')
+                ain, aind = make_complex_ladder_state(1, f'ain_{i + 1}')
+                aout, aoutd = make_complex_ladder_state(1, f'aout_{i + 1}')
+                gamma_i = Symbol(f'gamma_{i + 1}', positive=True, real=True)
 
-            # check if gamma_i should be zero (i.e. if there is no coupling)
-            if g.k == Matrix.zeros(1, 2):
-                gamma_i = 0
+                # check if gamma_i should be zero (i.e. if there is no coupling)
+                if g.k == Matrix.zeros(1, 2):
+                    gamma_i = 0
 
-            eqns.append(-aout + ain - sympy.sqrt(2 * gamma_i) * ap)
-            eqns.append(-aoutd + aind - sympy.sqrt(2 * gamma_i) * apd)
+                eqns.append(-aout + ain - sympy.sqrt(2 * gamma_i) * ap)
+                eqns.append(-aoutd + aind - sympy.sqrt(2 * gamma_i) * apd)
 
         return Matrix(eqns)
 
@@ -1016,17 +1040,27 @@ class SplitNetwork:
         eqns = self.interaction_hamiltonian.equations_of_motion + s * x
 
         # add langevin terms to auxiliary modes
-        for i, g in enumerate(self.gs):
-            ain, aind = make_complex_ladder_state(1, f'ain_{i + 1}')
-            gamma_i = Symbol(f'gamma_{i + 1}', positive=True, real=True)
+        # special case for one internal degree of freedom
+        if len(self.gs) == 1:
+            ain, aind = make_complex_ladder_state(1, f'ain')
+            gamma = Symbol(f'gamma', positive=True, real=True)
+            eqns[2] += -gamma * x[2] + sympy.sqrt(2 * gamma) * ain
+            eqns[3] += -gamma * x[3] + sympy.sqrt(2 * gamma) * aind
+        else:
+            for i, g in enumerate(self.gs):
+                ain, aind = make_complex_ladder_state(1, f'ain_{i + 1}')
+                gamma_i = Symbol(f'gamma_{i + 1}', positive=True, real=True)
 
-            # check if gamma_i should be zero (i.e. if there is no coupling)
-            if g.k == Matrix.zeros(1, 2):
-                gamma_i = 0
+                # check if gamma_i should be zero (i.e. if there is no coupling)
+                if g.k == Matrix.zeros(1, 2):
+                    gamma_i = 0
 
-            aux_mode_index = x.rows // 2 + 2 * i  # index of aux modes within eqns
-            eqns[aux_mode_index] += -gamma_i * x[aux_mode_index] + sympy.sqrt(2 * gamma_i) * ain
-            eqns[aux_mode_index+1] += -gamma_i * x[aux_mode_index+1] + sympy.sqrt(2 * gamma_i) * aind
+                aux_mode_index = x.rows // 2 + 2 * i  # index of aux modes within eqns
+                eqns[aux_mode_index] += -gamma_i * x[aux_mode_index] + sympy.sqrt(2 * gamma_i) * ain
+                eqns[aux_mode_index+1] += -gamma_i * x[aux_mode_index+1] + sympy.sqrt(2 * gamma_i) * aind
+
+        # add the input-output equations
+        m = Matrix(sympy.BlockMatrix([[eqns], [self.input_output_eqns]]))
 
         # construct the series feed equations (aout_1 -> ain_2 etc..)
         _series = []
@@ -1037,8 +1071,10 @@ class SplitNetwork:
             _series.append(aoutd - aind)
         _series = Matrix(_series)
 
-        # add the input-output equations
-        m = Matrix(sympy.BlockMatrix([[eqns], [self.input_output_eqns], [_series]]))
+        # add the series feed equations (if any)
+        if len(_series) > 0:
+            m = Matrix(sympy.BlockMatrix([m, [_series]]))
+
         # add the input-output symbols
         x = Matrix(sympy.BlockMatrix([[self.states], [self.input_output_symbols]]))
         return SplitNetwork.FrequencyDomainEqns(m, x)
@@ -1055,7 +1091,10 @@ class SplitNetwork:
             >>> network = tf2network((s**2 + s * gamma_f + omega_s**2) / (s**2 - s * gamma_f + omega_s**2))
             >>> gamma_1, gamma_2 = network.aux_coupling_constants
         """
-        return list(map(lambda i: sympy.Symbol(f'gamma_{i + 1}', positive=True, real=True), range(len(self.gs))))
+        if len(self.gs) == 1:
+            return [sympy.Symbol('gamma', positive=True, real=True)]
+        else:
+            return list(map(lambda i: sympy.Symbol(f'gamma_{i + 1}', positive=True, real=True), range(len(self.gs))))
 
 
 def split_system(open_osc: SLH) -> SplitNetwork:
