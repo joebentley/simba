@@ -1,6 +1,6 @@
 
 from copy import deepcopy
-from typing import List, NamedTuple, Dict, Optional
+from typing import List, NamedTuple, Optional, Union, Tuple
 
 import sympy
 
@@ -781,6 +781,34 @@ def make_complex_ladder_state(num_dofs: int, symbol: str = 'a') -> sympy.Matrix:
 """Network Synthesis"""
 
 
+class States:
+    """Represents a collection of state variables that can be queried to extract different variables."""
+    def __init__(self, states: sympy.Matrix):
+        self.states = states
+
+    def get_symbol(self, name: str) -> Optional[sympy.Symbol]:
+        r"""
+        Get symbol from self.states with given name.
+        To get a conjugated variable, e.g. :math:`a_1^\dagger`, use ``conjugate(a_1)``.
+        """
+        if not isinstance(name, str):
+            raise TypeError("name must be a string")
+
+        for symbol in self.states:
+            if str(symbol) == name:
+                return symbol
+
+        return None
+
+    def get_symbols(self, names: List[str]) -> List[sympy.Symbol]:
+        """Same as `get_symbol` but takes and returns a list."""
+        return list(map(self.get_symbol, names))
+
+    def index_of(self, symbol: sympy.Symbol) -> Optional[int]:
+        """Return index of symbol in ``self.states``, or ``None`` if not found."""
+        return list(self.states).index(symbol)
+
+
 class SplitNetwork:
     """
     Represents a tuple of ([G_1, ..., G_n], H^d), as returned by `split_system`.
@@ -818,7 +846,6 @@ class SplitNetwork:
     @property
     def input_output_symbols(self) -> sympy.Matrix:
         """Return the symbols for the input and output fields."""
-
         # special case for one degree of freedom
         if len(self.gs) == 1:
             ain, aind = make_complex_ladder_state(1, f'ain')
@@ -976,64 +1003,184 @@ class SplitNetwork:
 
         return Matrix(eqns)
 
-    class FrequencyDomainEqns:
+    @property
+    def state_vector(self) -> sympy.Matrix:
+        r"""
+        Returns column vector of states as follows:
+
+        .. math::
+            (a_1, a_1^\dagger, \dots, a_n, a_n^\dagger;
+            a_1', a_1'^\dagger,\dots, a_n', a_n'^\dagger;
+            a_\text{in 1}, a_\text{in 1}^\dagger, a_\text{in m},a_\text{in m}^\dagger;
+            a_\text{out 1}, a_\text{out 1}^\dagger, a_\text{out m}, a_\text{out m}^\dagger)^T
+
+        for system with ``n`` internal degrees of freedom and ``m`` inputs and outputs.
         """
-        Used to manage results of `SplitNetwork.frequency_domain_eqns`.
+        return sympy.Matrix(sympy.BlockMatrix([[self.states], [self.input_output_symbols]]))
 
-        Attributes:
-            - ``eqns`` is a column matrix of equations equal to 0
-            - ``states`` is a column matrix of main, auxiliary, and input-output state symbols (in that order)
+    class DynamicalMatrix:
         """
-        def __init__(self, eqns: sympy.Matrix, states: sympy.Matrix):
-            self.eqns = eqns
-            self.states = states
+        Represents the dynamical matrix as returned by `SplitNetwork.dynamical_matrix`.
 
-        def get_symbol(self, name: str) -> Optional[sympy.Symbol]:
-            r"""
-            Get symbol from self.states with given name.
+        Used to calculate the transfer functions between any two quantities in the system.
+        """
 
-            To get a conjugated variable, e.g. :math:`a_1^\dagger`, use ``conjugate(a_1)``.
+        def __init__(self, matrix: sympy.Matrix, states: Union[sympy.Matrix, States]):
+            self.matrix = matrix
+            self.states = states if isinstance(states, States) else States(states)
+
+        class TransferMatrix:
             """
-            if not isinstance(name, str):
-                raise TypeError("name must be a string")
-
-            for symbol in self.states:
-                if str(symbol) == name:
-                    return symbol
-
-            return None
-
-        def get_symbols(self, names: List[str]) -> List[sympy.Symbol]:
-            """Same as `get_symbol` but takes and returns a list."""
-            return list(map(self.get_symbol, names))
-
-        def solve(self, states: List[sympy.Symbol]) -> Dict[sympy.Symbol, sympy.Expr]:
-            r"""
-            Solve eqns for given states (e.g. input states :math:`ain_1, ain_1^\dagger`),
-            returned as a dictionary of symbols to equations.
-
-            To enter a conjugated variable, e.g. :math:`a_1^\dagger`, use ``conjugate(a_1)``.
-
-            :param states, list of variables to solve for
-            :returns dictionary of symbols to solutions
+            Represents the results of `DynamicalMatrix.transfer_matrix`. Used to extract the transfer functions.
             """
-            # remove the state from the symbols list
-            _states = list(self.states)
-            for symbol in states:
-                _states.remove(symbol)
 
-            # get all the solutions
-            solns = sympy.linsolve(list(self.eqns), _states)
-            if solns == sympy.EmptySet:
-                raise ResultError("No solution found")
+            def __init__(self, matrix: sympy.Matrix, states: Union[sympy.Matrix, States]):
+                self.matrix = matrix
+                self.states = states if isinstance(states, States) else States(states)
 
-            # get soln from the FiniteSet
-            solns = solns.args[0]
-            return dict(zip(_states, solns))
+            def __getitem__(self, item) -> sympy.Expr:
+                """
+                Get the transfer function for the given pair of variables.
+
+                The variables can be given as strings (which are passed to `States.get_symbol`) or as sympy Symbols.
+
+                E.g. ``tf["aout", "ain"]`` gets the transfer function from ``ain`` to ``aout``.
+                """
+                if not isinstance(item, tuple) or (isinstance(item, tuple) and len(item) != 2):
+                    raise ValueError("Expected two keys to be passed as the subscript")
+
+                symbol_1, symbol_2 = item
+
+                if isinstance(item[0], str):
+                    symbol_1 = self.states.get_symbol(item[0])
+                    if symbol_1 is None:
+                        raise ValueError("The first symbol could not be found in self.states")
+                if isinstance(item[1], str):
+                    symbol_2 = self.states.get_symbol(item[1])
+                    if symbol_2 is None:
+                        raise ValueError("The second symbol could not be found in self.states")
+
+                symbol_1_index = self.states.index_of(symbol_1)
+                symbol_2_index = self.states.index_of(symbol_2)
+                missing_symbols = []
+                if symbol_1_index is None:
+                    missing_symbols.append(symbol_1)
+                if symbol_2_index is None:
+                    missing_symbols.append(symbol_2)
+
+                if len(missing_symbols) > 0:
+                    raise IndexError("Symbols " + str(", ".join(missing_symbols)) + " missing from self.states")
+
+                return self.matrix[symbol_1_index, symbol_2_index]
+
+        @property
+        def transfer_matrix(self) -> TransferMatrix:
+            """Calculate the transfer matrix for the system by adding an excitation to each mode."""
+            excitation_matrix = sympy.eye(*self.matrix.shape)
+            return self.TransferMatrix((excitation_matrix - self.matrix) ** -1, self.states)
+
+        @property
+        def eqns(self) -> sympy.Matrix:
+            """Calculate matrix of RHS of frequency-domain equations :math:`v = Mv`."""
+            return self.matrix * self.states.states
 
     @property
-    def frequency_domain_eqns(self) -> FrequencyDomainEqns:
-        """Return all the equations in frequency domain."""
+    def dynamical_matrix(self) -> DynamicalMatrix:
+        r"""
+        Calculate the full frequency-domain dynamical matrix :math:`M` for the system, include input and output
+        equations, such that :math:`v = M v` where :math:`v` is the full frequency-domain state vector in
+        the order returned by `state_vector`.
+
+        TODO: use a sparse matrix
+        """
+        from sympy import BlockMatrix, Matrix, Symbol
+        s = Symbol('s')
+        # A matrix part (internal modes -> internal modes)
+        a_mat = self.interaction_hamiltonian.dynamical_matrix / (-s)
+
+        # Add B matrix part (inputs -> internal modes) and dissipation terms to a_mat
+        n = len(self.gs)
+        b_mat = Matrix.zeros(n*4, n*4)
+
+        # special case for one internal degree of freedom
+        if n == 1:
+            gamma = Symbol(f'gamma', positive=True, real=True)
+            a_mat[2, 2] = -gamma / (-s)
+            a_mat[3, 3] = -gamma / (-s)
+            b_mat[2, 0] = sympy.sqrt(2 * gamma) / (-s)
+            b_mat[3, 1] = sympy.sqrt(2 * gamma) / (-s)
+        else:
+            for i, g in enumerate(self.gs):
+                gamma_i = Symbol(f'gamma_{i + 1}', positive=True, real=True)
+
+                # check if gamma_i should be zero (i.e. if there is no coupling)
+                if g.k == Matrix.zeros(1, 2):
+                    gamma_i = 0
+
+                aux_mode_index = n * 2 + 2 * i  # row index of aux mode within a_mat
+                # a' -> a'
+                a_mat[aux_mode_index, aux_mode_index] = -gamma_i / (-s)
+                a_mat[aux_mode_index+1, aux_mode_index+1] = -gamma_i / (-s)
+                # ain -> a'
+                b_mat[aux_mode_index, i] = sympy.sqrt(2 * gamma_i) / (-s)
+                b_mat[aux_mode_index+1, i+1] = sympy.sqrt(2 * gamma_i) / (-s)
+
+        # Add C matrix part (internal modes -> outputs)
+        c_mat = Matrix.zeros(n*4, n*4)
+
+        if n == 1:
+            gamma = Symbol(f'gamma', positive=True, real=True)
+            c_mat[2, 2] = -sympy.sqrt(2 * gamma)
+            c_mat[3, 3] = -sympy.sqrt(2 * gamma)
+        else:
+            for i, g in enumerate(self.gs):
+                gamma_i = Symbol(f'gamma_{i + 1}', positive=True, real=True)
+
+                # check if gamma_i should be zero (i.e. if there is no coupling)
+                if g.k == Matrix.zeros(1, 2):
+                    gamma_i = 0
+
+                aux_mode_index = n * 2 + 2 * i  # column index of aux mode within c_mat
+                output_mode_index = aux_mode_index  # row index of output mode within c_mat
+                c_mat[output_mode_index, aux_mode_index] = -sympy.sqrt(2 * gamma_i)
+                c_mat[output_mode_index, aux_mode_index] = -sympy.sqrt(2 * gamma_i)
+
+        # Add D matrix part (direct feed equations)
+        d_mat = Matrix.zeros(n*4, n*4)
+
+        if n == 1:
+            d_mat[2, 0] = 1
+            d_mat[3, 1] = 1
+        else:
+            for i, g in enumerate(self.gs):
+                output_mode_index = n * 2 + 2 * i  # row index of output modes
+                input_mode_index = i  # column index of inputs modes
+                d_mat[output_mode_index, input_mode_index] = 1
+                d_mat[output_mode_index+1, input_mode_index+1] = 1
+
+        # add the series feed terms to the d matrix
+        for i in range(n - 1):
+            output_mode_index = n * 2 + 2 * i  # row index of output modes
+            input_mode_index = i  # column index of inputs modes
+            d_mat[input_mode_index + 2, output_mode_index] = 1
+            d_mat[input_mode_index + 2 + 1, output_mode_index + 1] = 1
+
+        m = Matrix(BlockMatrix([[a_mat, b_mat], [c_mat, d_mat]]))
+        return SplitNetwork.DynamicalMatrix(m, self.state_vector)
+
+    @property
+    def transfer_matrix(self) -> DynamicalMatrix.TransferMatrix:
+        """Shortcut for `self.dynamical_matrix.transfer_matrix`"""
+        return self.dynamical_matrix.transfer_matrix
+
+    @property
+    def tfm(self) -> DynamicalMatrix.TransferMatrix:
+        """Shortcut for `self.dynamical_matrix.transfer_matrix`"""
+        return self.dynamical_matrix.transfer_matrix
+
+    @property
+    def frequency_domain_eqns(self) -> sympy.Matrix:
+        """Return a column matrix of all the equations in frequency domain."""
         from sympy import Matrix, Symbol
         s = Symbol('s')
         x = self.states
@@ -1073,11 +1220,9 @@ class SplitNetwork:
 
         # add the series feed equations (if any)
         if len(_series) > 0:
-            m = Matrix(sympy.BlockMatrix([m, [_series]]))
+            m = Matrix(sympy.BlockMatrix([[m], [_series]]))
 
-        # add the input-output symbols
-        x = Matrix(sympy.BlockMatrix([[self.states], [self.input_output_symbols]]))
-        return SplitNetwork.FrequencyDomainEqns(m, x)
+        return m
 
     @property
     def aux_coupling_constants(self) -> List[sympy.Symbol]:
