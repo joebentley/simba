@@ -37,7 +37,7 @@ h_int.expr.simplify()
 ```python
 print(split_network.state_vector)
 tfm = split_network.tfm
-tf = tfm['aout_1', 'a_1'].simplify()
+tf = tfm.open_loop('a_1', 'aout_1').simplify()
 gamma_1, _ = split_network.aux_coupling_constants
 adiabatically_eliminate(tf, gamma_1)
 ```
