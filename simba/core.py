@@ -1102,8 +1102,6 @@ class SplitNetwork:
                 """
                 Calculate the open loop transfer function from the excitation to the variable (the closed loop transfer
                 function divided by the closed loop gain).
-
-                This is usually the one you want.
                 """
                 return self.closed_loop(excitation, variable) / self.closed_loop_gain(excitation)
 
