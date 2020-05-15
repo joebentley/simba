@@ -1038,40 +1038,74 @@ class SplitNetwork:
                 self.matrix = matrix
                 self.states = states if isinstance(states, States) else States(states)
 
-            def __getitem__(self, item) -> sympy.Expr:
+            @staticmethod
+            def _get_symbol_index(states: States, variable: Union[sympy.Symbol, str]) -> int:
                 """
-                Get the transfer function for the given pair of variables.
+                If ``variable`` is a string, try to get it from ``states``.
+                Then try to get the index of it within ``states``.
+                """
+                if isinstance(variable, str):
+                    variable = states.get_symbol(variable)
+                    if variable is None:
+                        raise IndexError("String not found in self.states")
+
+                index = states.index_of(variable)
+                if index is None:
+                    raise IndexError("Symbol not found in self.states")
+                return index
+
+            def closed_loop(self, excitation: Union[sympy.Symbol, str], variable: Union[sympy.Symbol, str])\
+                    -> sympy.Expr:
+                """
+                Get the closed loop transfer function from the excitation to the variable.
 
                 The variables can be given as strings (which are passed to `States.get_symbol`) or as sympy Symbols.
 
-                E.g. ``tf["aout", "ain"]`` gets the transfer function from ``ain`` to ``aout``.
+                E.g. ``closed_loop("ain", "aout")`` is the closed-loop transfer function from ``ain`` to ``aout``.
                 """
-                if not isinstance(item, tuple) or (isinstance(item, tuple) and len(item) != 2):
-                    raise ValueError("Expected two keys to be passed as the subscript")
 
-                symbol_1, symbol_2 = item
-
-                if isinstance(item[0], str):
-                    symbol_1 = self.states.get_symbol(item[0])
-                    if symbol_1 is None:
-                        raise ValueError("The first symbol could not be found in self.states")
-                if isinstance(item[1], str):
-                    symbol_2 = self.states.get_symbol(item[1])
-                    if symbol_2 is None:
-                        raise ValueError("The second symbol could not be found in self.states")
-
-                symbol_1_index = self.states.index_of(symbol_1)
-                symbol_2_index = self.states.index_of(symbol_2)
                 missing_symbols = []
-                if symbol_1_index is None:
-                    missing_symbols.append(symbol_1)
-                if symbol_2_index is None:
-                    missing_symbols.append(symbol_2)
+                excitation_index = None
+                variable_index = None
+
+                try:
+                    excitation_index = self._get_symbol_index(self.states, excitation)
+                except IndexError:
+                    missing_symbols.append(excitation)
+
+                try:
+                    variable_index = self._get_symbol_index(self.states, variable)
+                except IndexError:
+                    missing_symbols.append(variable)
 
                 if len(missing_symbols) > 0:
                     raise IndexError("Symbols " + str(", ".join(missing_symbols)) + " missing from self.states")
 
-                return self.matrix[symbol_1_index, symbol_2_index]
+                return self.matrix[variable_index, excitation_index]
+
+            def closed_loop_gain(self, excitation: Union[sympy.Symbol, str]):
+                r"""
+                Calculate the closed loop gain from the excitation to the corresponding variable.
+
+                I.e. if excitation is :math:`\hat{a}_\text{exc}` then returns the transfer function from
+                :math:`\hat{a}_\text{exc}` to :math:`\hat{a}`.
+                """
+                try:
+                    excitation_index = self._get_symbol_index(self.states, excitation)
+                except IndexError:
+                    raise IndexError("Symbol missing from self.states")
+
+                return self.matrix[excitation_index, excitation_index]
+
+            def open_loop(self, excitation: Union[sympy.Symbol, str], variable: Union[sympy.Symbol, str])\
+                    -> sympy.Expr:
+                """
+                Calculate the open loop transfer function from the excitation to the variable (the closed loop transfer
+                function divided by the closed loop gain).
+
+                This is usually the one you want.
+                """
+                return self.closed_loop(excitation, variable) / self.closed_loop_gain(excitation)
 
         @property
         def transfer_matrix(self) -> TransferMatrix:
