@@ -84,6 +84,9 @@ def adiabatically_eliminate(expr: sympy.Expr, gamma: sympy.Symbol) -> sympy.Expr
     Eliminate terms from ``expr`` which are very small compared to ``gamma`` which is much larger than
     any other frequency.
     """
+    if expr == 0:
+        return sympy.Number(0)
+
     from sympy import fraction, Symbol
 
     numer, denom = fraction(expr)
