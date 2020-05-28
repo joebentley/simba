@@ -790,6 +790,7 @@ class States:
         r"""
         Get symbol from self.states with given name.
         To get a conjugated variable, e.g. :math:`a_1^\dagger`, use ``conjugate(a_1)``.
+        To get a primed variable write ``a'_1`` rather than ``a_1'``.
         """
         if not isinstance(name, str):
             raise TypeError("name must be a string")
@@ -1125,10 +1126,18 @@ class SplitNetwork:
 
         TODO: use a sparse matrix
         """
-        from sympy import BlockMatrix, Matrix, Symbol
+        from sympy import BlockMatrix, Matrix, Symbol, I
         s = Symbol('s')
         # A matrix part (internal modes -> internal modes)
         a_mat = self.interaction_hamiltonian.dynamical_matrix / (-s)
+
+        # Add detuning and internal squeezing terms
+        for i, g in enumerate(self.gs):
+            a_mat[2*i, 2*i] = I * 2 * g.r[0, 0] / (-s)
+            a_mat[2*i+1, 2*i+1] = -I * 2 * g.r[1, 1] / (-s)
+            # TODO: check these
+            a_mat[2*i+1, 2*i] = I * g.r[0, 1] / (-s)
+            a_mat[2*i, 2*i+1] = -I * g.r[1, 0] / (-s)
 
         # Add B matrix part (inputs -> internal modes) and dissipation terms to a_mat
         n = len(self.gs)
@@ -1209,52 +1218,6 @@ class SplitNetwork:
     def tfm(self) -> DynamicalMatrix.TransferMatrix:
         """Shortcut for `self.dynamical_matrix.transfer_matrix`"""
         return self.dynamical_matrix.transfer_matrix
-
-    @property
-    def frequency_domain_eqns(self) -> sympy.Matrix:
-        """Return a column matrix of all the equations in frequency domain."""
-        from sympy import Matrix, Symbol
-        s = Symbol('s')
-        x = self.states
-        eqns = self.interaction_hamiltonian.equations_of_motion + s * x
-
-        # add langevin terms to auxiliary modes
-        # special case for one internal degree of freedom
-        if len(self.gs) == 1:
-            ain, aind = make_complex_ladder_state(1, f'ain')
-            gamma = Symbol(f'gamma', positive=True, real=True)
-            eqns[2] += -gamma * x[2] + sympy.sqrt(2 * gamma) * ain
-            eqns[3] += -gamma * x[3] + sympy.sqrt(2 * gamma) * aind
-        else:
-            for i, g in enumerate(self.gs):
-                ain, aind = make_complex_ladder_state(1, f'ain_{i + 1}')
-                gamma_i = Symbol(f'gamma_{i + 1}', positive=True, real=True)
-
-                # check if gamma_i should be zero (i.e. if there is no coupling)
-                if g.k == Matrix.zeros(1, 2):
-                    gamma_i = 0
-
-                aux_mode_index = x.rows // 2 + 2 * i  # index of aux modes within eqns
-                eqns[aux_mode_index] += -gamma_i * x[aux_mode_index] + sympy.sqrt(2 * gamma_i) * ain
-                eqns[aux_mode_index+1] += -gamma_i * x[aux_mode_index+1] + sympy.sqrt(2 * gamma_i) * aind
-
-        # add the input-output equations
-        m = Matrix(sympy.BlockMatrix([[eqns], [self.input_output_eqns]]))
-
-        # construct the series feed equations (aout_1 -> ain_2 etc..)
-        _series = []
-        for i in range(len(self.gs) - 1):
-            aout, aoutd = make_complex_ladder_state(1, f'aout_{i + 1}')
-            ain, aind = make_complex_ladder_state(1, f'ain_{i + 2}')
-            _series.append(aout - ain)
-            _series.append(aoutd - aind)
-        _series = Matrix(_series)
-
-        # add the series feed equations (if any)
-        if len(_series) > 0:
-            m = Matrix(sympy.BlockMatrix([[m], [_series]]))
-
-        return m
 
     @property
     def aux_coupling_constants(self) -> List[sympy.Symbol]:
