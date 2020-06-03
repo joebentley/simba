@@ -66,10 +66,8 @@ def simplify(expr, rhs=None):
             s = m.mathematica_code(expr)
 
         result = subprocess.run(["wolframscript", "-code", f"Simplify[{s}]"], capture_output=True)
-        try:
-            return mp.mathematica(str(result.stdout))
-        except ValueError:  # mp.mathematica will throw a ValueError if wolframscript returns a list
-            return False
+
+        return mp.mathematica(str(result.stdout))
     else:
         from sympy import simplify
 

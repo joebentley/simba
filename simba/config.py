@@ -29,8 +29,6 @@ def is_wolframscript_installed():
 
 def init_params():
     """Check what to set params to if they are set to "auto"."""
-    from shutil import which
-
     if params['wolframscript'] == Param.AUTO and is_wolframscript_installed():
         params['wolframscript'] = Param.ON
 

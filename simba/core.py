@@ -425,15 +425,27 @@ class StateSpace:
         j = j_matrix(g.shape[0])
         s = Symbol('s')
 
-        from sympy import conjugate
-        cond1 = simplify(g.subs(s, -conjugate(s)).H * j * g - j)
-        if cond1 != Matrix.zeros(*j.shape):
-            raise StateSpaceError(f"Not possible to realise: {cond1} != 0")
+        if not config.params['wolframscript']:
+            from sympy import conjugate
+            cond1 = simplify(g.subs(s, -conjugate(s)).H * j * g - j)
+            if cond1 != Matrix.zeros(*j.shape):
+                raise StateSpaceError(f"Not possible to realise: {cond1} != 0")
 
-        j = j_matrix(self.d.shape[1])
-        cond2 = simplify(self.d * j * self.d.H - j)
-        if cond2 != Matrix.zeros(*j.shape):
-            raise StateSpaceError(f"Not possible to realise: {cond2} != 0")
+            j = j_matrix(self.d.shape[1])
+            cond2 = simplify(self.d * j * self.d.H - j)
+            if cond2 != Matrix.zeros(*j.shape):
+                raise StateSpaceError(f"Not possible to realise: {cond2} != 0")
+        else:
+            # HACK: We have to handle wolframscript a bit specially
+            from sympy import conjugate
+            cond1 = simplify(g.subs(s, -conjugate(s)).H * j * g - j, Matrix.zeros(*j.shape)) == b'True\n'
+            if not cond1:
+                raise StateSpaceError(f"Not possible to realise")
+
+            j = j_matrix(self.d.shape[1])
+            cond2 = simplify(self.d * j * self.d.H - j, Matrix.zeros(*j.shape))  == b'True\n'
+            if not cond2:
+                raise StateSpaceError(f"Not possible to realise")
 
     def to_skr(self) -> 'SKR':
         """
