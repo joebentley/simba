@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='quantum-simba',
-    version='0.9dev',
+    version='0.9.1dev',
     packages=['simba'],
     license='MIT',
     long_description=open('README.md').read(),
@@ -16,6 +16,6 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    install_requires=['numpy', 'scipy', 'sympy', 'pytest'],
+    install_requires=['numpy', 'scipy', 'sympy>=1.5.1', 'pytest'],
     python_requires='>=3.6'
 )
