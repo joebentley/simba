@@ -22,6 +22,14 @@ def test_extracting_coeffs_from_transfer_function():
         transfer_function_to_coeffs(1 / expr)
 
 
+def test_siso_transfer_function_reproduced_as_expected():
+    s = symbols('s')
+    expr = (2 * s + 8) / (2 * s ** 2 + 4 * s + 2)
+    ss = StateSpace.from_transfer_function(expr)
+    tf = ss.to_transfer_function()[0, 0]
+    assert (tf - expr).simplify() == 0
+
+
 def example_statespace():
     a = Matrix([[1, 2], [3, 4]])
     b = Matrix([5, 6])
@@ -103,24 +111,6 @@ def test_unrealisable_transfer_function_should_raise_error():
         ss.find_transformation_to_physically_realisable()
 
     assert not is_transfer_matrix_physically_realisable(g * Matrix.eye(2))
-
-
-# TODO: investigate this
-# def test_finding_2_dof_realisation():
-#     s = symbols('s')
-#     # cascade of two tuned cavities
-#     tf = (s + 1)**2 / (s - 1)**2
-#     ss = transfer_function_to_state_space(tf).extended_to_quantum().to_physically_realisable()
-#     ss.pprint()
-#     gs, h_d = split_system(ss.to_slh())
-#
-#     from simba.graph import nodes_from_dofs
-#     nodes = nodes_from_dofs(gs, h_d)
-#
-#     assert len(nodes) == 2
-#     # should only have series connection
-#     for node in nodes:
-#         assert len(node.connections) == 0
 
 
 @pytest.mark.slow
