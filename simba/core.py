@@ -277,8 +277,8 @@ class StateSpace:
         j_i = j_matrix(self.num_inputs)
         x = MatrixSymbol('X', *j.shape)
         sol = solve_matrix_eqn([a * x + x * a.H + b * j_i * b.H, x * c.H + b * j_i * d.H], x)
-        if len(sol) != 1:
-            raise ResultError("Expected one and exactly one result.")
+        #if len(sol) != 1:
+        #    raise ResultError("Expected one and exactly one result.")
 
         x = sol[0]
         if not x.is_hermitian:
