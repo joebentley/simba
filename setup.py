@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='quantum-simba',
-    version='0.7dev',
+    version='0.8dev',
     packages=['simba'],
     license='MIT',
     long_description=open('README.md').read(),
