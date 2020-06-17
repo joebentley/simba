@@ -1,6 +1,6 @@
 numpy
 scipy
-sympy>=1.5.1
+sympy==1.5.1
 #ply==3.11
 #pyx==0.15
 pygraphviz
