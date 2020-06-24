@@ -14,7 +14,8 @@ Begin["`Private`"];
 
 JMatrix[n_?Positive]:=DiagonalMatrix[ConstantArray[{1,-1},n]//Flatten];
 SymplecticJ[tfmatrix_List]:=
-Module[{jmat=JMatrix[Dimensions[tfmatrix][[1]]/2]},ConjugateTranspose[tfmatrix/.s->Conjugate[s]].jmat.(tfmatrix/.s->-s)];
+Module[{jmat=JMatrix[Dimensions[tfmatrix][[1]]/2]},
+ConjugateTranspose[tfmatrix/.s->Conjugate[s]].jmat.(tfmatrix/.s->-s)];
 
 (* Swaps rows e.g. (1, 2, 3, 11, 22, 33)^T \[Rule] (1, 11, 2, 22, 3, 33)^T *)
 constructPermutationMatrix[n_?Positive]:=
