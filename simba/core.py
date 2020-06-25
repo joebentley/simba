@@ -426,6 +426,9 @@ class StateSpace:
         j = j_matrix(g.shape[0])
         s = Symbol('s')
 
+        if self.d * self.d.H != Matrix.eye(*self.d.shape):
+            raise StateSpaceError("Not possible to realise, D is not unitary")
+
         if not config.params['wolframscript']:
             from sympy import conjugate
             cond1 = simplify(g.subs(s, -conjugate(s)).H * j * g - j)
