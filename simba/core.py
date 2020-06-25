@@ -266,7 +266,8 @@ class StateSpace:
         if n % 2 != 0:
             raise DimensionError("num_degrees_of_freedom should be even for a quantum system")
 
-        self.raise_error_if_not_possible_to_realise()
+        if config.params['checks']:
+            self.raise_error_if_not_possible_to_realise()
 
         if config.params['checks'] and self.is_physically_realisable:
             return Matrix.eye(self.num_degrees_of_freedom)
