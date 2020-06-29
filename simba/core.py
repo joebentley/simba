@@ -278,8 +278,9 @@ class StateSpace:
         j_i = j_matrix(self.num_inputs)
         x = MatrixSymbol('X', *j.shape)
         sol = solve_matrix_eqn([a * x + x * a.H + b * j_i * b.H, x * c.H + b * j_i * d.H], x)
-        #if len(sol) != 1:
-        #    raise ResultError("Expected one and exactly one result.")
+
+        if len(sol) == 0:
+            raise ResultError("Found no solution to the physical realisability equations.")
 
         x = sol[0]
         if not x.is_hermitian:
@@ -426,12 +427,13 @@ class StateSpace:
         j = j_matrix(g.shape[0])
         s = Symbol('s')
 
-        if self.d * self.d.H != Matrix.eye(*self.d.shape):
-            raise StateSpaceError("Not possible to realise, D is not unitary")
-
         if not config.params['wolframscript']:
             from sympy import conjugate
-            cond1 = simplify(g.subs(s, -conjugate(s)).H * j * g - j)
+            cond1 = simplify(g.subs(s, conjugate(s)).H * j * g.subs(s, -s) - j)
+
+            import sympy.printing.mathematica as m
+            print(m.mathematica_code(cond1[0, 0]))
+
             if cond1 != Matrix.zeros(*j.shape):
                 raise StateSpaceError(f"Not possible to realise: {cond1} != 0")
 
@@ -442,7 +444,7 @@ class StateSpace:
         else:
             # HACK: We have to handle wolframscript a bit specially
             from sympy import conjugate
-            cond1 = simplify(g.subs(s, -conjugate(s)).H * j * g - j, Matrix.zeros(*j.shape)) == b'True\n'
+            cond1 = simplify(g.subs(s, conjugate(s)).H * j * g.subs(s, -s) - j, Matrix.zeros(*j.shape)) == b'True\n'
             if not cond1:
                 raise StateSpaceError(f"Not possible to realise")
 
