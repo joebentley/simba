@@ -194,7 +194,7 @@ def nodes_from_dofs(gs, h_d) -> Nodes:
     def check_dpa_or_tuned(g):
         detuning = False
         internal_squeezing = False
-        if simplify(g.r[0, 0] + g.r[1, 1]) != 0:
+        if simplify(g.r[0, 0]) != 0:
             detuning = True
         if simplify(g.r[0, 1]) != 0:
             internal_squeezing = True
