@@ -121,9 +121,9 @@ class Nodes:
             elif node.internal == Internal.DETUNED:
                 node_shape = 'ellipse'
             elif node.internal == Internal.DPA:
-                node_shape = 'diamond'
-            elif node.internal == Internal.ALL:
                 node_shape = 'square'
+            elif node.internal == Internal.ALL:
+                node_shape = 'triangle'
 
             g.add_node(str(i + 1), shape=node_shape)
 
@@ -189,11 +189,25 @@ def nodes_from_dofs(gs, h_d) -> Nodes:
     :param h_d: the direct interaction Hamiltonian matrix
     :return: a `Nodes` instance
     """
-    from sympy import Matrix
+    from sympy import re, simplify
 
-    # TODO: distinguish between detuned cavity and tuned DPA
+    def check_dpa_or_tuned(g):
+        detuning = False
+        internal_squeezing = False
+        if simplify(g.r[0, 0] + g.r[1, 1]) != 0:
+            detuning = True
+        if simplify(g.r[0, 1]) != 0:
+            internal_squeezing = True
+        if not detuning and not internal_squeezing:
+            return Internal.TUNED
+        if detuning and not internal_squeezing:
+            return Internal.DETUNED
+        if not detuning and internal_squeezing:
+            return Internal.DPA
+        if detuning and internal_squeezing:
+            return Internal.ALL
 
-    nodes = list(map(lambda g: Node(Internal.ALL if g.r != Matrix.zeros(2, 2) else Internal.TUNED), gs))
+    nodes = list(map(Node, map(check_dpa_or_tuned, gs)))
 
     # now we figure out which self-connection we need
     # see Hendra (2008) Section 6.3 https://arxiv.org/abs/0806.4448
