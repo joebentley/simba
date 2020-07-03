@@ -123,7 +123,7 @@ class Nodes:
             elif node.internal == Internal.DPA:
                 node_shape = 'diamond'
             elif node.internal == Internal.ALL:
-                node_shape = 'star'
+                node_shape = 'square'
 
             g.add_node(str(i + 1), shape=node_shape)
 
