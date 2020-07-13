@@ -1,0 +1,356 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 12.1' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[     12906,        348]
+NotebookOptionsPosition[     11579,        317]
+NotebookOutlinePosition[     11973,        333]
+CellTagsIndexPosition[     11930,        330]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell["\<\
+Now, we look at the 2 degree of freedom quantum expander from Mikhail\
+\[CloseCurlyQuote]s paper. He only states the input-output relation for one \
+quadrature but we can find the other from the condition on G\
+\>", "Text",
+ CellChangeTimes->{{3.803021284939691*^9, 
+  3.803021356786667*^9}},ExpressionUUID->"68e81cc7-969a-48a2-9a6d-\
+bd6353a15dae"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"SetDirectory", "[", 
+   RowBox[{"NotebookDirectory", "[", "]"}], "]"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"<<", "Simba`"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"$Assumptions", "=", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"\[Gamma]", ">", "0"}], ",", 
+     RowBox[{"\[Chi]", ">", "0"}], ",", 
+     RowBox[{"\[CapitalOmega]", ">", "0"}], ",", 
+     RowBox[{"\[Omega]s", ">", "0"}]}], "}"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"umat", "=", 
+   RowBox[{
+    FractionBox["1", 
+     SqrtBox["2"]], 
+    TagBox[
+     RowBox[{"(", "\[NoBreak]", GridBox[{
+        {"1", "1"},
+        {
+         RowBox[{"-", "\[ImaginaryI]"}], "\[ImaginaryI]"}
+       },
+       GridBoxAlignment->{"Columns" -> {{Center}}, "Rows" -> {{Baseline}}},
+       GridBoxSpacings->{"Columns" -> {
+           Offset[0.27999999999999997`], {
+            Offset[0.7]}, 
+           Offset[0.27999999999999997`]}, "Rows" -> {
+           Offset[0.2], {
+            Offset[0.4]}, 
+           Offset[0.2]}}], "\[NoBreak]", ")"}],
+     Function[BoxForm`e$, 
+      MatrixForm[BoxForm`e$]]]}]}], ";"}]}], "Input",
+ CellChangeTimes->{{3.803021269716208*^9, 3.803021280850822*^9}, {
+  3.803021607981101*^9, 3.803021608182253*^9}, {3.8030310322549267`*^9, 
+  3.80303104069366*^9}, {3.803031114660872*^9, 3.803031125733049*^9}},
+ CellLabel->
+  "In[587]:=",ExpressionUUID->"852e312d-2788-42b0-9d7c-cdd98e887424"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{
+    RowBox[{"NB", ":", " ", 
+     RowBox[{"just", " ", "guessed", " ", "this"}]}], ",", " ", 
+    RowBox[{
+    "in", " ", "future", " ", "need", " ", "to", " ", "solve", " ", "for", 
+     " ", "G"}]}], " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"transferMatrix", "=", 
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{
+         FractionBox[
+          RowBox[{
+           RowBox[{
+            RowBox[{"(", 
+             RowBox[{"\[Gamma]", "-", "\[Chi]"}], ")"}], "\[CapitalOmega]"}], 
+           "+", 
+           RowBox[{"\[ImaginaryI]", " ", 
+            RowBox[{"(", 
+             RowBox[{
+              SuperscriptBox["\[CapitalOmega]", "2"], "-", 
+              SuperscriptBox["\[Omega]s", "2"]}], ")"}]}]}], 
+          RowBox[{
+           RowBox[{
+            RowBox[{"(", 
+             RowBox[{"\[Gamma]", "+", "\[Chi]"}], ")"}], "\[CapitalOmega]"}], 
+           "-", 
+           RowBox[{"\[ImaginaryI]", " ", 
+            RowBox[{"(", 
+             RowBox[{
+              SuperscriptBox["\[CapitalOmega]", "2"], "-", 
+              SuperscriptBox["\[Omega]s", "2"]}], ")"}]}]}]], ",", "0"}], 
+        "}"}], ",", 
+       RowBox[{"{", 
+        RowBox[{"0", ",", 
+         FractionBox[
+          RowBox[{
+           RowBox[{
+            RowBox[{"(", 
+             RowBox[{"\[Gamma]", "+", "\[Chi]"}], ")"}], "\[CapitalOmega]"}], 
+           "+", 
+           RowBox[{"\[ImaginaryI]", " ", 
+            RowBox[{"(", 
+             RowBox[{
+              SuperscriptBox["\[CapitalOmega]", "2"], "-", 
+              SuperscriptBox["\[Omega]s", "2"]}], ")"}]}]}], 
+          RowBox[{
+           RowBox[{
+            RowBox[{"(", 
+             RowBox[{"\[Gamma]", "-", "\[Chi]"}], ")"}], "\[CapitalOmega]"}], 
+           "-", 
+           RowBox[{"\[ImaginaryI]", " ", 
+            RowBox[{"(", 
+             RowBox[{
+              SuperscriptBox["\[CapitalOmega]", "2"], "-", 
+              SuperscriptBox["\[Omega]s", "2"]}], ")"}]}]}]]}], "}"}]}], 
+      "}"}]}], ";"}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"Symplectic\[CapitalTheta]", "[", 
+      RowBox[{
+       RowBox[{"transferMatrix", "/.", 
+        RowBox[{"\[CapitalOmega]", "\[Rule]", 
+         RowBox[{
+          RowBox[{"-", "\[ImaginaryI]"}], " ", "s"}]}]}], ",", "s"}], "]"}], 
+     "\[Equal]", 
+     RowBox[{"\[CapitalTheta]Matrix", "[", "1", "]"}]}], "//", 
+    "Simplify"}]}]}]], "Input",
+ CellChangeTimes->{{3.8030313228865137`*^9, 3.803031333404155*^9}, {
+   3.803031373805833*^9, 3.8030314052096357`*^9}, {3.803031511397435*^9, 
+   3.803031521802454*^9}, {3.803031844645108*^9, 3.803031914689959*^9}, 
+   3.803033334378953*^9},
+ CellLabel->
+  "In[591]:=",ExpressionUUID->"33f1f12b-f468-45c8-99c0-d46c35c122b1"],
+
+Cell[BoxData["True"], "Output",
+ CellChangeTimes->{
+  3.80303152268786*^9, {3.8030318459800262`*^9, 3.8030318937396183`*^9}, 
+   3.8030319240951014`*^9, 3.8031042017958384`*^9},
+ CellLabel->
+  "Out[592]=",ExpressionUUID->"da2d24c7-2272-489e-bc64-824805a5595f"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"ss", "=", 
+  RowBox[{
+   RowBox[{"MinimalStateSpaceModel", "@", 
+    RowBox[{"StateSpaceModel", "[", 
+     RowBox[{"TransferFunctionModel", "[", 
+      RowBox[{
+       RowBox[{
+        RowBox[{
+         RowBox[{"-", "transferMatrix"}], "/.", 
+         RowBox[{"\[CapitalOmega]", "\[Rule]", 
+          RowBox[{
+           RowBox[{"-", "\[ImaginaryI]"}], " ", "s"}]}]}], "/.", 
+        RowBox[{"s", "\[Rule]", 
+         RowBox[{"-", "s"}]}]}], ",", "s"}], "]"}], "]"}]}], "//", 
+   "Simplify"}]}]], "Input",
+ CellChangeTimes->{{3.80303192561032*^9, 3.803031944118227*^9}, {
+  3.8030320868084*^9, 3.8030321323158216`*^9}, {3.803033285589528*^9, 
+  3.803033348043202*^9}},
+ CellLabel->
+  "In[593]:=",ExpressionUUID->"defdcb40-73a1-4d21-8eb2-cbb6376c617b"],
+
+Cell[BoxData[
+ TemplateBox[{"0", "1", "0", "0", "0", "0", 
+   RowBox[{"-", 
+     SuperscriptBox["\[Omega]s", "2"]}], 
+   RowBox[{
+     RowBox[{"-", "\[Gamma]"}], "-", "\[Chi]"}], "0", "0", "1", "0", "0", "0",
+    "0", "1", "0", "0", "0", "0", 
+   RowBox[{"-", 
+     SuperscriptBox["\[Omega]s", "2"]}], 
+   RowBox[{
+     RowBox[{"-", "\[Gamma]"}], "+", "\[Chi]"}], "0", "1", "0", 
+   RowBox[{
+     RowBox[{"-", "2"}], " ", "\[Gamma]"}], "0", "0", "1", "0", "0", "0", "0", 
+   RowBox[{
+     RowBox[{"-", "2"}], " ", "\[Gamma]"}], "0", "1", 
+   InterpretationBox["\[InvisibleSpace]", None], {
+   StateSpaceModel, {
+    False, False, {
+     False, False}}, {$CellContext`stname1, $CellContext`stname2, \
+$CellContext`stname3, $CellContext`stname4}, {{
+     Control`CommonDump`$DUMMY$, Control`CommonDump`$DUMMY$}, {
+     Control`CommonDump`$DUMMY$, Control`CommonDump`$DUMMY$}, {
+     Control`CommonDump`$DUMMY$, Control`CommonDump`$DUMMY$, 
+      Control`CommonDump`$DUMMY$, Control`CommonDump`$DUMMY$}}, Identity, 
+    Automatic, 2, 2, 4, 1, {}, {False, False}, False, Automatic, None, 
+    Automatic}, {}},
+  "StateSpaceModelFull",
+  BaseStyle->{NumberMarks -> False},
+  DisplayFunction->(TagBox[
+    SubsuperscriptBox[
+     RowBox[{"(", 
+       GridBox[{{#, #2, #3, #4, #5, #6}, {#7, #8, #9, #10, #11, #12}, {#13, \
+#14, #15, #16, #17, #18}, {#19, #20, #21, #22, #23, #24}, {#25, #26, #27, \
+#28, #29, #30}, {#31, #32, #33, #34, #35, #36}}, AllowedDimensions -> {6, 6}, 
+        GridBoxDividers -> {"Rows" -> {False, False, False, False, 
+            Directive[
+             GrayLevel[0], 
+             GrayLevel[0.6]], {False}, False}, 
+          "Columns" -> {False, False, False, False, 
+            Directive[
+             GrayLevel[0], 
+             GrayLevel[0.6]], {False}, False}}, DefaultBaseStyle -> 
+        "SystemsModelGrid00"], ")"}], #37, 
+     ButtonBox[
+      GraphicsBox[{
+        RectangleBox[{0, 0}, DefaultBaseStyle -> "SystemsModelSuperscript"], 
+        InsetBox[
+         StyleBox[
+         "\[ScriptCapitalS]", DefaultBaseStyle -> 
+          "SystemsModelSuperscript"], {0.5, 0.5}]}, ImageSize -> 20], 
+      ButtonFunction :> Control`Typesetting`SystemsModelTypesetToggle[
+        ButtonNotebook[], FE`CMObj], Evaluator -> Automatic, Appearance -> 
+      None], MultilineFunction -> None], 
+    EventHandlerTag[{"MouseEntered" :> {FE`CMObj = MathLink`CallFrontEnd[
+          FrontEnd`Value[
+           FEPrivate`Self[]]]}, PassEventsDown -> True, PassEventsUp -> 
+      True}]]& ),
+  InterpretationFunction->(RowBox[{"StateSpaceModel", "[", 
+     RowBox[{"{", 
+       RowBox[{"{", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{1, 4}, ","], "}"}], ",", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{7, 10}, ","], "}"}], ",", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{13, 16}, ","], "}"}], ",", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{19, 22}, ","], "}"}], "}"}], ",", 
+       RowBox[{"{", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{5, 6}, ","], "}"}], ",", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{11, 12}, ","], "}"}], ",", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{17, 18}, ","], "}"}], ",", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{23, 24}, ","], "}"}], "}"}], ",", 
+       RowBox[{"{", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{25, 28}, ","], "}"}], ",", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{31, 34}, ","], "}"}], "}"}], ",", 
+       RowBox[{"{", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{29, 30}, ","], "}"}], ",", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{35, 36}, ","], "}"}], "}"}], "}"}], ",", 
+     "SamplingPeriod", "->", 
+     RowBox[{#37}], ",", "SystemsModelLabels", "->", "None", "]"}]& ),
+  Tooltip->StateSpaceModel]], "Output",
+ CellChangeTimes->{{3.803032092880845*^9, 3.8030321332347307`*^9}, {
+  3.8030332923928967`*^9, 3.803033349334716*^9}, {3.80310420031076*^9, 
+  3.803104202171852*^9}},
+ CellLabel->
+  "Out[593]=",ExpressionUUID->"7796d05b-1a79-4b21-ad52-1d444704478b"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"ObservableModelQ", "[", "ss", "]"}], "&&", 
+  RowBox[{"ControllableModelQ", "[", "ss", "]"}]}]], "Input",
+ CellChangeTimes->{{3.80303219254221*^9, 3.803032200113058*^9}},
+ CellLabel->
+  "In[594]:=",ExpressionUUID->"8a01f488-8222-45b3-b4a2-27da1fc60ff9"],
+
+Cell[BoxData["True"], "Output",
+ CellChangeTimes->{{3.803032194776726*^9, 3.803032200419821*^9}, 
+   3.8030333244624233`*^9, 3.803104202375005*^9},
+ CellLabel->
+  "Out[594]=",ExpressionUUID->"1d6237bf-d681-4bcf-99a9-d39f5f3e8777"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"<<", "Simba`"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{"TransformationToRealisable", "[", "ss", "]"}]}], "Input",
+ CellChangeTimes->{{3.803032133895688*^9, 3.80303214044308*^9}, {
+  3.803032438686805*^9, 3.803032440646353*^9}},
+ CellLabel->
+  "In[595]:=",ExpressionUUID->"c6290c5e-e2d2-4486-8c2b-13ac66dd0aae"],
+
+Cell[BoxData["$Aborted"], "Output",
+ CellChangeTimes->{3.803038147259267*^9, 3.803038219014319*^9, 
+  3.803038462249229*^9, 3.803104204431923*^9},
+ CellLabel->
+  "Out[596]=",ExpressionUUID->"cf4c4d69-5129-4eb9-a418-5db668e5f4cf"]
+}, Open  ]]
+},
+WindowSize->{808, 755},
+WindowMargins->{{Automatic, 138}, {29, Automatic}},
+FrontEndVersion->"12.1 for Mac OS X x86 (64-bit) (June 19, 2020)",
+StyleDefinitions->"Default.nb",
+ExpressionUUID->"15b27601-8452-4537-995c-a6d96f7b3dfa"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[558, 20, 359, 7, 58, "Text",ExpressionUUID->"68e81cc7-969a-48a2-9a6d-bd6353a15dae"],
+Cell[920, 29, 1453, 40, 118, "Input",ExpressionUUID->"852e312d-2788-42b0-9d7c-cdd98e887424"],
+Cell[CellGroupData[{
+Cell[2398, 73, 2813, 78, 106, "Input",ExpressionUUID->"33f1f12b-f468-45c8-99c0-d46c35c122b1"],
+Cell[5214, 153, 260, 5, 34, "Output",ExpressionUUID->"da2d24c7-2272-489e-bc64-824805a5595f"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[5511, 163, 775, 20, 94, "Input",ExpressionUUID->"defdcb40-73a1-4d21-8eb2-cbb6376c617b"],
+Cell[6289, 185, 4099, 94, 130, "Output",ExpressionUUID->"7796d05b-1a79-4b21-ad52-1d444704478b"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[10425, 284, 288, 6, 30, "Input",ExpressionUUID->"8a01f488-8222-45b3-b4a2-27da1fc60ff9"],
+Cell[10716, 292, 230, 4, 34, "Output",ExpressionUUID->"1d6237bf-d681-4bcf-99a9-d39f5f3e8777"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[10983, 301, 348, 7, 52, "Input",ExpressionUUID->"c6290c5e-e2d2-4486-8c2b-13ac66dd0aae"],
+Cell[11334, 310, 229, 4, 34, "Output",ExpressionUUID->"cf4c4d69-5129-4eb9-a418-5db668e5f4cf"]
+}, Open  ]]
+}
+]
+*)
+
