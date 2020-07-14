@@ -680,7 +680,7 @@ class SLH:
 
         x0d = latex(self.x0.H)
         x0 = latex(self.x0)
-        return r"$$\displaystyle \left(%s, %s %s, \frac{1}{2} %s %s %s\right)$$"\
+        return r"$$\displaystyle \left(%s, %s %s, %s %s %s\right)$$"\
                % (s_latex_string, latex(self.k), x0, x0d, latex(self.r), x0)
 
     def __repr__(self) -> str:
@@ -1154,8 +1154,8 @@ class SplitNetwork:
             a_mat[2*i, 2*i] = I * 2 * g.r[0, 0] / (-s)
             a_mat[2*i+1, 2*i+1] = -I * 2 * g.r[1, 1] / (-s)
             # TODO: check these
-            a_mat[2*i+1, 2*i] = I * g.r[0, 1] / (-s)
-            a_mat[2*i, 2*i+1] = -I * g.r[1, 0] / (-s)
+            a_mat[2*i+1, 2*i] = I * 2 * g.r[0, 1] / (-s)
+            a_mat[2*i, 2*i+1] = -I * 2 * g.r[1, 0] / (-s)
 
         # Add B matrix part (inputs -> internal modes) and dissipation terms to a_mat
         n = len(self.gs)
