@@ -827,6 +827,11 @@ class States:
         """Return index of symbol in ``self.states``, or ``None`` if not found."""
         return list(self.states).index(symbol)
 
+    def _repr_latex_(self) -> str:
+        """Display `StateSpace` in Jupyter notebook as LaTeX."""
+        from sympy.printing.latex import latex
+        return f"$$\\displaystyle {latex(self.states)}$$"
+
 
 class SplitNetwork:
     """
