@@ -19,7 +19,7 @@ else
 fi
 
 while true; do
-    read -p "Do you wish to run \"twine upload dist/*\"?" yn
+    read -p "Do you wish to run \"twine upload dist/*\"? " yn
     case $yn in
         [Yy]* ) echo "Uploading..."; twine upload dist/*; exit ;;
         [Nn]* ) exit ;;
