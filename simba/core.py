@@ -1207,7 +1207,7 @@ class SplitNetwork:
                 aux_mode_index = n * 2 + 2 * i  # column index of aux mode within c_mat
                 output_mode_index = aux_mode_index  # row index of output mode within c_mat
                 c_mat[output_mode_index, aux_mode_index] = -sympy.sqrt(2 * gamma_i)
-                c_mat[output_mode_index, aux_mode_index] = -sympy.sqrt(2 * gamma_i)
+                c_mat[output_mode_index+1, aux_mode_index+1] = -sympy.sqrt(2 * gamma_i)
 
         # Add D matrix part (direct feed equations)
         d_mat = Matrix.zeros(n*4, n*4)
