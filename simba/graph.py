@@ -129,7 +129,7 @@ class Nodes:
 
             # determine self connection shapes
             if len(node.self_connections) != 0:
-                g.add_node(f"{i + 1}'", shape='circle')
+                g.add_node(f"{i + 1}'", shape='point', width=0.1)
                 # g.add_node(str(i + 1), shape=node_shape)  # reset main node shape
 
                 arrow_head = _arrow_head_from_connections_set(node.self_connections)
