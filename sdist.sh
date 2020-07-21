@@ -2,6 +2,8 @@
 
 # Generate the distribution for upload to PyPI
 
+rm dist/*
+
 if python setup.py sdist bdist_wheel; then
     printf "\nᶘ ᵒᴥᵒᶅ  Build succeeded (in ./dist)\n\n"
 else
