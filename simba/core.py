@@ -659,12 +659,14 @@ class SLH:
         - ``x0``: vector of system state Symbols
     """
 
-    def __init__(self, s, k, r, x0):
+    def __init__(self, s, k, r, x0=None):
         """Construct generalised open oscillator :math:`G = (S, L, H)`."""
         from sympy import ImmutableMatrix
         self.s = ImmutableMatrix(s)
         self.k = ImmutableMatrix(k)
         self.r = ImmutableMatrix(r)
+        if x0 is None:
+            x0 = make_complex_ladder_state(r.shape[0] // 2, 'a')
         self.x0 = ImmutableMatrix(x0)
 
     def _repr_latex_(self) -> str:
