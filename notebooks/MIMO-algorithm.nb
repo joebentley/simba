@@ -1,0 +1,672 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 12.1' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[     26636,        664]
+NotebookOptionsPosition[     25741,        641]
+NotebookOutlinePosition[     26134,        657]
+CellTagsIndexPosition[     26091,        654]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell[TextData[{
+ ButtonBox["https://en.wikibooks.org/wiki/Control_Systems/Realizations\n",
+  BaseStyle->"Hyperlink",
+  ButtonData->{
+    URL["https://en.wikibooks.org/wiki/Control_Systems/Realizations"], None},
+  ButtonNote->"https://en.wikibooks.org/wiki/Control_Systems/Realizations"],
+ Cell[BoxData[
+  FormBox[
+   ButtonBox[
+    RowBox[{
+     RowBox[{"\"\<Linear system theory and design\>\"", " ", "Chi"}], "-", 
+     RowBox[{"Tsong", " ", "Chen"}]}],
+    BaseStyle->"Hyperlink",
+    ButtonData->{
+      URL[
+      "http://www.ebadi.profcms.um.ac.ir/imagesm/474/stories/modern_control/\
+chen%20c%20-t%20linear%20system%20theory%20and%20design.pdf"], None},
+    ButtonNote->
+     "http://www.ebadi.profcms.um.ac.ir/imagesm/474/stories/modern_control/\
+chen%20c%20-t%20linear%20system%20theory%20and%20design.pdf"], 
+   TraditionalForm]],
+  FormatType->"TraditionalForm",ExpressionUUID->
+  "33b8d2d7-b448-4916-b246-8f9c8cd2aad2"],
+ " (theorem 4.2)"
+}], "Text",
+ CellChangeTimes->{{3.807427851400632*^9, 3.8074278646862707`*^9}, {
+  3.807427989620679*^9, 3.8074280179007187`*^9}, {3.80742811594512*^9, 
+  3.807428118750368*^9}},ExpressionUUID->"26cc6fca-960f-4605-8f60-\
+e2c61fefcbb3"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"tfmat", "=", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{"-", 
+        FractionBox[
+         RowBox[{
+          RowBox[{"-", 
+           SuperscriptBox["g", "2"]}], "+", 
+          SuperscriptBox["s", "2"], "+", 
+          RowBox[{"s", " ", "\[Gamma]f"}], "+", 
+          SuperscriptBox["\[Omega]s", "2"]}], 
+         RowBox[{
+          SuperscriptBox["g", "2"], "-", 
+          SuperscriptBox["s", "2"], "+", 
+          RowBox[{"s", " ", "\[Gamma]f"}], "-", 
+          SuperscriptBox["\[Omega]s", "2"]}]]}], ",", "0"}], "}"}], ",", 
+     RowBox[{"{", 
+      RowBox[{"0", ",", 
+       RowBox[{"-", 
+        FractionBox[
+         RowBox[{
+          RowBox[{"-", 
+           SuperscriptBox["g", "2"]}], "+", 
+          SuperscriptBox["s", "2"], "+", 
+          RowBox[{"s", " ", "\[Gamma]f"}], "+", 
+          SuperscriptBox["\[Omega]s", "2"]}], 
+         RowBox[{
+          SuperscriptBox["g", "2"], "-", 
+          SuperscriptBox["s", "2"], "+", 
+          RowBox[{"s", " ", "\[Gamma]f"}], "-", 
+          SuperscriptBox["\[Omega]s", "2"]}]]}]}], "}"}]}], "}"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{"StateSpaceModel", "[", 
+  RowBox[{"TransferFunctionModel", "[", 
+   RowBox[{"tfmat", ",", "s"}], "]"}], "]"}]}], "Input",
+ CellChangeTimes->{{3.807427779013831*^9, 3.807427783896062*^9}, {
+  3.807427905294672*^9, 3.807427911030128*^9}},
+ CellLabel->
+  "In[117]:=",ExpressionUUID->"4ec0cb59-5714-4f82-8784-f85df81b8897"],
+
+Cell[BoxData[
+ TemplateBox[{"0", "1", "0", "0", "0", "0", 
+   RowBox[{
+     SuperscriptBox["g", "2"], "-", 
+     SuperscriptBox["\[Omega]s", "2"]}], "\[Gamma]f", "0", "0", "1", "0", "0",
+    "0", "0", "1", "0", "0", "0", "0", 
+   RowBox[{
+     SuperscriptBox["g", "2"], "-", 
+     SuperscriptBox["\[Omega]s", "2"]}], "\[Gamma]f", "0", "1", "0", 
+   RowBox[{"2", " ", "\[Gamma]f"}], "0", "0", "1", "0", "0", "0", "0", 
+   RowBox[{"2", " ", "\[Gamma]f"}], "0", "1", 
+   InterpretationBox["\[InvisibleSpace]", None], {
+   StateSpaceModel, {
+    False, False, {
+     False, False}}, {$CellContext`stname1, $CellContext`stname2, \
+$CellContext`stname3, $CellContext`stname4}, {{
+     Control`CommonDump`$DUMMY$, Control`CommonDump`$DUMMY$}, {
+     Control`CommonDump`$DUMMY$, Control`CommonDump`$DUMMY$}, {
+     Control`CommonDump`$DUMMY$, Control`CommonDump`$DUMMY$, 
+      Control`CommonDump`$DUMMY$, Control`CommonDump`$DUMMY$}}, Identity, 
+    Automatic, 2, 2, 4, 1, {}, {False, False}, False, Automatic, None, 
+    Automatic}, {}},
+  "StateSpaceModelFull",
+  BaseStyle->{NumberMarks -> False},
+  DisplayFunction->(TagBox[
+    SubsuperscriptBox[
+     RowBox[{"(", 
+       GridBox[{{#, #2, #3, #4, #5, #6}, {#7, #8, #9, #10, #11, #12}, {#13, \
+#14, #15, #16, #17, #18}, {#19, #20, #21, #22, #23, #24}, {#25, #26, #27, \
+#28, #29, #30}, {#31, #32, #33, #34, #35, #36}}, AllowedDimensions -> {6, 6}, 
+        GridBoxDividers -> {"Rows" -> {False, False, False, False, 
+            Directive[
+             GrayLevel[0], 
+             GrayLevel[0.6]], {False}, False}, 
+          "Columns" -> {False, False, False, False, 
+            Directive[
+             GrayLevel[0], 
+             GrayLevel[0.6]], {False}, False}}, DefaultBaseStyle -> 
+        "SystemsModelGrid00"], ")"}], #37, 
+     ButtonBox[
+      GraphicsBox[{
+        RectangleBox[{0, 0}, DefaultBaseStyle -> "SystemsModelSuperscript"], 
+        InsetBox[
+         StyleBox[
+         "\[ScriptCapitalS]", DefaultBaseStyle -> 
+          "SystemsModelSuperscript"], {0.5, 0.5}]}, ImageSize -> 20], 
+      ButtonFunction :> Control`Typesetting`SystemsModelTypesetToggle[
+        ButtonNotebook[], FE`CMObj], Evaluator -> Automatic, Appearance -> 
+      None], MultilineFunction -> None], 
+    EventHandlerTag[{"MouseEntered" :> {FE`CMObj = MathLink`CallFrontEnd[
+          FrontEnd`Value[
+           FEPrivate`Self[]]]}, PassEventsDown -> True, PassEventsUp -> 
+      True}]]& ),
+  InterpretationFunction->(RowBox[{"StateSpaceModel", "[", 
+     RowBox[{"{", 
+       RowBox[{"{", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{1, 4}, ","], "}"}], ",", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{7, 10}, ","], "}"}], ",", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{13, 16}, ","], "}"}], ",", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{19, 22}, ","], "}"}], "}"}], ",", 
+       RowBox[{"{", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{5, 6}, ","], "}"}], ",", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{11, 12}, ","], "}"}], ",", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{17, 18}, ","], "}"}], ",", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{23, 24}, ","], "}"}], "}"}], ",", 
+       RowBox[{"{", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{25, 28}, ","], "}"}], ",", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{31, 34}, ","], "}"}], "}"}], ",", 
+       RowBox[{"{", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{29, 30}, ","], "}"}], ",", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{35, 36}, ","], "}"}], "}"}], "}"}], ",", 
+     "SamplingPeriod", "->", 
+     RowBox[{#37}], ",", "SystemsModelLabels", "->", "None", "]"}]& ),
+  Tooltip->StateSpaceModel]], "Output",
+ CellChangeTimes->{3.807427911702129*^9},
+ CellLabel->
+  "Out[118]=",ExpressionUUID->"c0467542-e197-409b-a0e7-9ce64d4e485a"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{"pad", " ", 
+    RowBox[{"w", "/", " ", "zeros"}], " ", "up", " ", "to", " ", "longest", 
+    " ", "length"}], " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{
+    RowBox[{
+     RowBox[{"padWithZeros", "[", "m_", "]"}], ":=", 
+     RowBox[{"Module", "[", 
+      RowBox[{
+       RowBox[{"{", "ml", "}"}], ",", "\[IndentingNewLine]", 
+       RowBox[{
+        RowBox[{"ml", "=", 
+         RowBox[{"Max", "[", 
+          RowBox[{"Length", "/@", 
+           RowBox[{"Flatten", "[", 
+            RowBox[{"m", ",", "1"}], "]"}]}], "]"}]}], ";", 
+        "\[IndentingNewLine]", 
+        RowBox[{"Map", "[", 
+         RowBox[{
+          RowBox[{
+           RowBox[{"Map", "[", 
+            RowBox[{
+             RowBox[{
+              RowBox[{"Join", "[", 
+               RowBox[{"#", ",", 
+                RowBox[{"Table", "[", 
+                 RowBox[{"0", ",", 
+                  RowBox[{"ml", "-", 
+                   RowBox[{"Length", "[", "#", "]"}]}]}], "]"}]}], "]"}], 
+              "&"}], ",", "#"}], "]"}], "&"}], ",", "m"}], "]"}]}]}], "]"}]}],
+     ";"}], "\[IndentingNewLine]", 
+   RowBox[{"(*", " ", 
+    RowBox[{
+    "Decompose", " ", "into", " ", "strictly", " ", "proper", " ", "rational",
+      " ", "part", " ", "and", " ", "other", " ", "part"}], " ", "*)"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{"ss", "=", 
+    RowBox[{"Module", "[", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{
+        RowBox[{"d", "=", 
+         RowBox[{"Limit", "[", 
+          RowBox[{"tfmat", ",", 
+           RowBox[{"s", "\[Rule]", "\[Infinity]"}]}], "]"}]}], ",", "lcd", 
+        ",", "lcdCoeffs", ",", "\[IndentingNewLine]", "numers", ",", 
+        "numerCoeffs", ",", "numerMatrices", ",", "\[IndentingNewLine]", 
+        RowBox[{"id", "=", 
+         RowBox[{"IdentityMatrix", "[", 
+          RowBox[{"tfmat", "//", "Dimensions"}], "]"}]}], ",", 
+        "\[IndentingNewLine]", "id0", ",", "\[IndentingNewLine]", "row1", ",",
+         "a", ",", "b", ",", "c", ",", "aSize", ",", "a2"}], "}"}], ",", 
+      "\[IndentingNewLine]", 
+      RowBox[{
+       RowBox[{"id0", "=", 
+        RowBox[{"ConstantArray", "[", 
+         RowBox[{"0", ",", 
+          RowBox[{"Dimensions", "[", "id", "]"}]}], "]"}]}], ";", 
+       "\[IndentingNewLine]", 
+       RowBox[{"lcd", "=", 
+        RowBox[{"PolynomialLCM", "@@", 
+         RowBox[{"Denominator", "/@", 
+          RowBox[{"Flatten", "[", "tfmat", "]"}]}]}]}], ";", 
+       "\[IndentingNewLine]", 
+       RowBox[{"lcdCoeffs", "=", 
+        RowBox[{"Rest", "@", 
+         RowBox[{"Reverse", "@", 
+          RowBox[{"CoefficientList", "[", 
+           RowBox[{"lcd", ",", "s"}], "]"}]}]}]}], ";", "\[IndentingNewLine]", 
+       RowBox[{"(*", " ", 
+        RowBox[{"G", " ", "=", " ", 
+         RowBox[{"N", " ", "/", " ", "lcd"}]}], " ", "*)"}], 
+       "\[IndentingNewLine]", 
+       RowBox[{"numers", "=", 
+        RowBox[{"lcd", " ", "tfmat"}]}], ";", "\[IndentingNewLine]", 
+       RowBox[{"numerCoeffs", "=", 
+        RowBox[{"padWithZeros", "@", 
+         RowBox[{"CoefficientList", "[", 
+          RowBox[{"numers", ",", "s"}], "]"}]}]}], ";", "\[IndentingNewLine]", 
+       RowBox[{"numerMatrices", "=", "\[IndentingNewLine]", 
+        RowBox[{"Rest", "@", 
+         RowBox[{"Reverse", "@", 
+          RowBox[{"Table", "[", 
+           RowBox[{
+            RowBox[{"Map", "[", 
+             RowBox[{
+              RowBox[{
+               RowBox[{"Map", "[", 
+                RowBox[{
+                 RowBox[{
+                  RowBox[{"Part", "[", 
+                   RowBox[{"#", ",", "n"}], "]"}], "&"}], ",", "#"}], "]"}], 
+               "&"}], ",", "m"}], "]"}], ",", "\[IndentingNewLine]", 
+            RowBox[{"{", 
+             RowBox[{"n", ",", "1", ",", 
+              RowBox[{"Length", "@", 
+               RowBox[{"numersCoeffs", "[", 
+                RowBox[{"[", 
+                 RowBox[{"1", ",", "1"}], "]"}], "]"}]}]}], "}"}]}], 
+           "]"}]}]}]}], ";", "\[IndentingNewLine]", 
+       RowBox[{"c", "=", 
+        RowBox[{"ArrayFlatten", "[", 
+         RowBox[{"{", "numerMatrices", "}"}], "]"}]}], ";", 
+       "\[IndentingNewLine]", "\[IndentingNewLine]", 
+       RowBox[{"aSize", "=", 
+        RowBox[{"Length", "[", "lcdCoeffs", "]"}]}], ";", 
+       "\[IndentingNewLine]", 
+       RowBox[{"a", "=", 
+        RowBox[{"ConstantArray", "[", 
+         RowBox[{"null", ",", 
+          RowBox[{"{", 
+           RowBox[{"aSize", ",", " ", "aSize"}], "}"}]}], "]"}]}], ";", 
+       "\[IndentingNewLine]", 
+       RowBox[{"Do", "[", 
+        RowBox[{
+         RowBox[{
+          RowBox[{"a", "[", 
+           RowBox[{"[", 
+            RowBox[{"1", ",", "i"}], "]"}], "]"}], "=", 
+          RowBox[{
+           RowBox[{"-", 
+            RowBox[{"lcdCoeffs", "[", 
+             RowBox[{"[", "i", "]"}], "]"}]}], " ", "identity"}]}], ",", 
+         RowBox[{"{", 
+          RowBox[{"i", ",", "aSize"}], "}"}]}], "]"}], ";", 
+       "\[IndentingNewLine]", 
+       RowBox[{"Do", "[", 
+        RowBox[{
+         RowBox[{
+          RowBox[{"a", "[", 
+           RowBox[{"[", 
+            RowBox[{
+             RowBox[{"i", "+", "1"}], ",", "i"}], "]"}], "]"}], "=", 
+          "identity"}], ",", 
+         RowBox[{"{", 
+          RowBox[{"i", ",", 
+           RowBox[{"aSize", "-", "1"}]}], "}"}]}], "]"}], ";", 
+       "\[IndentingNewLine]", 
+       RowBox[{"a", "=", 
+        RowBox[{"ArrayFlatten", "[", 
+         RowBox[{"a", "/.", 
+          RowBox[{"{", 
+           RowBox[{
+            RowBox[{"identity", "\[Rule]", "id"}], ",", 
+            RowBox[{"null", "\[Rule]", "id0"}]}], "}"}]}], "]"}]}], ";", 
+       "\[IndentingNewLine]", 
+       RowBox[{"b", "=", 
+        RowBox[{"ConstantArray", "[", 
+         RowBox[{"id0", ",", 
+          RowBox[{"{", 
+           RowBox[{"aSize", ",", "1"}], "}"}]}], "]"}]}], ";", 
+       "\[IndentingNewLine]", 
+       RowBox[{
+        RowBox[{"b", "[", 
+         RowBox[{"[", 
+          RowBox[{"1", ",", "1"}], "]"}], "]"}], "=", "id"}], ";", 
+       "\[IndentingNewLine]", 
+       RowBox[{"b", "=", 
+        RowBox[{"ArrayFlatten", "[", "b", "]"}]}], ";", "\[IndentingNewLine]", 
+       RowBox[{"StateSpaceModel", "[", 
+        RowBox[{"{", 
+         RowBox[{"a", ",", "b", ",", "c", ",", "d"}], "}"}], "]"}]}]}], 
+     "\[IndentingNewLine]", "]"}]}], "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"TransferFunctionModel", "[", "ss", "]"}], "[", "s", "]"}], 
+    "\[Equal]", "tfmat"}]}]}]], "Input",
+ CellChangeTimes->{{3.80742779986895*^9, 3.807427838479959*^9}, {
+   3.807427870968678*^9, 3.807427880542544*^9}, {3.807427939459257*^9, 
+   3.807427957738357*^9}, 3.807427987907414*^9, {3.807435441923739*^9, 
+   3.807435446314247*^9}, {3.807435490470154*^9, 3.807435493137347*^9}, {
+   3.8074355459879227`*^9, 3.807435549725945*^9}, 3.807436806715629*^9, {
+   3.807436898343589*^9, 3.807437121033627*^9}, {3.8074374772104387`*^9, 
+   3.807437512439653*^9}, {3.807437609239957*^9, 3.80743770653752*^9}, {
+   3.807437871111721*^9, 3.807437966425631*^9}, {3.8074380510096703`*^9, 
+   3.807438071071885*^9}, {3.807438104496921*^9, 3.807438199213925*^9}, {
+   3.8074384131028957`*^9, 3.8074384379383087`*^9}, {3.807438489574942*^9, 
+   3.807438514817026*^9}, {3.807438676216103*^9, 3.80743874367175*^9}, {
+   3.807438801470023*^9, 3.8074388254272118`*^9}, 3.8074388566652946`*^9, {
+   3.8074391078581753`*^9, 3.807439134516568*^9}, {3.807439464093155*^9, 
+   3.8074394960751257`*^9}, {3.807439796068191*^9, 3.80743984777954*^9}, {
+   3.8074409235226917`*^9, 3.807440938169887*^9}, {3.807440991016533*^9, 
+   3.807440999969625*^9}, {3.8074426690937366`*^9, 3.807442706219552*^9}, {
+   3.8074431410798063`*^9, 3.807443168181542*^9}, {3.80744320375825*^9, 
+   3.8074432172571077`*^9}, {3.807443262704701*^9, 3.807443280646308*^9}, {
+   3.807443436837473*^9, 3.807443455135387*^9}, 3.8074435748580847`*^9, {
+   3.807443622079165*^9, 3.8074436222499313`*^9}, {3.8074439683212233`*^9, 
+   3.807443990211582*^9}, {3.807444021518606*^9, 3.807444078908259*^9}, {
+   3.807444236542056*^9, 3.807444248892006*^9}, {3.807444346208329*^9, 
+   3.8074443633785458`*^9}, {3.807444448751855*^9, 3.807444457091487*^9}, {
+   3.80744449156315*^9, 3.807444495571397*^9}, {3.807444535161365*^9, 
+   3.807444730445882*^9}, {3.807444795681189*^9, 3.807444858957127*^9}, {
+   3.8075052194730797`*^9, 3.807505484984775*^9}, {3.807505764838372*^9, 
+   3.807505775355414*^9}, {3.807505823258811*^9, 3.8075058290929127`*^9}, {
+   3.8075064053262787`*^9, 3.807506405535824*^9}, {3.807506444763591*^9, 
+   3.807506448917489*^9}, {3.8075071801368847`*^9, 3.807507209774989*^9}, {
+   3.807950847232114*^9, 3.807950935600121*^9}, {3.8079577298948603`*^9, 
+   3.80795773629991*^9}, {3.8079580170591097`*^9, 3.8079580358754587`*^9}, 
+   3.807958139457822*^9, {3.807958250471541*^9, 3.807958263132381*^9}, {
+   3.8079584517599087`*^9, 3.80795849967143*^9}, {3.8079593226038923`*^9, 
+   3.807959402869562*^9}, {3.807959459137033*^9, 3.8079594754507113`*^9}, {
+   3.807960919210593*^9, 3.807960943627221*^9}},
+ CellLabel->
+  "In[368]:=",ExpressionUUID->"47282509-c802-45f4-9d43-5689ded363b7"],
+
+Cell[BoxData[
+ TemplateBox[{
+   RowBox[{"-", "\[Gamma]f"}], "0", 
+   RowBox[{
+     RowBox[{"-", 
+       SuperscriptBox["g", "2"]}], "+", 
+     SuperscriptBox["\[Omega]s", "2"]}], "0", "1", "0", "0", 
+   RowBox[{"-", "\[Gamma]f"}], "0", 
+   RowBox[{
+     RowBox[{"-", 
+       SuperscriptBox["g", "2"]}], "+", 
+     SuperscriptBox["\[Omega]s", "2"]}], "0", "1", "1", "0", "0", "0", "0", 
+   "0", "0", "1", "0", "0", "0", "0", 
+   RowBox[{"-", "\[Gamma]f"}], "0", 
+   RowBox[{
+     SuperscriptBox["g", "2"], "-", 
+     SuperscriptBox["\[Omega]s", "2"]}], "0", "1", "0", "0", 
+   RowBox[{"-", "\[Gamma]f"}], "0", 
+   RowBox[{
+     SuperscriptBox["g", "2"], "-", 
+     SuperscriptBox["\[Omega]s", "2"]}], "0", "1", 
+   InterpretationBox["\[InvisibleSpace]", None], {
+   StateSpaceModel, {
+    False, False, {
+     False, False}}, {$CellContext`stname1, $CellContext`stname2, \
+$CellContext`stname3, $CellContext`stname4}, {{
+     Control`CommonDump`$DUMMY$, Control`CommonDump`$DUMMY$}, {
+     Control`CommonDump`$DUMMY$, Control`CommonDump`$DUMMY$}, {
+     Control`CommonDump`$DUMMY$, Control`CommonDump`$DUMMY$, 
+      Control`CommonDump`$DUMMY$, Control`CommonDump`$DUMMY$}}, Identity, 
+    Automatic, 2, 2, 4, 1, {}, {False, False}, False, Automatic, None, 
+    Automatic}, {}},
+  "StateSpaceModelMinimal",
+  BaseStyle->{NumberMarks -> False},
+  DisplayFunction->(TagBox[
+    SubsuperscriptBox[
+     RowBox[{"(", 
+       GridBox[{{
+          TooltipBox[
+           StyleBox[
+            StyleBox[
+            "\[FilledSmallSquare]", "SystemsModelMinimalElement"]], #], #2, 
+          TooltipBox[
+           StyleBox[
+            StyleBox[
+            "\[FilledSmallSquare]", "SystemsModelMinimalElement"]], #3], #4, 
+          TooltipBox[
+           StyleBox[
+            StyleBox[
+            "\[FilledSmallSquare]", 
+             "SystemsModelMinimalElement"]], #5], #6}, {#7, 
+          TooltipBox[
+           StyleBox[
+            StyleBox[
+            "\[FilledSmallSquare]", "SystemsModelMinimalElement"]], #8], #9, 
+          TooltipBox[
+           StyleBox[
+            StyleBox[
+            "\[FilledSmallSquare]", "SystemsModelMinimalElement"]], #10], #11, 
+          TooltipBox[
+           StyleBox[
+            StyleBox[
+            "\[FilledSmallSquare]", "SystemsModelMinimalElement"]], #12]}, {
+          TooltipBox[
+           StyleBox[
+            StyleBox[
+            "\[FilledSmallSquare]", 
+             "SystemsModelMinimalElement"]], #13], #14, #15, #16, #17, #18}, \
+{#19, 
+          TooltipBox[
+           StyleBox[
+            StyleBox[
+            "\[FilledSmallSquare]", 
+             "SystemsModelMinimalElement"]], #20], #21, #22, #23, #24}, {
+          TooltipBox[
+           StyleBox[
+            StyleBox[
+            "\[FilledSmallSquare]", "SystemsModelMinimalElement"]], #25], #26, 
+          TooltipBox[
+           StyleBox[
+            StyleBox[
+            "\[FilledSmallSquare]", "SystemsModelMinimalElement"]], #27], #28, 
+          TooltipBox[
+           StyleBox[
+            StyleBox[
+            "\[FilledSmallSquare]", 
+             "SystemsModelMinimalElement"]], #29], #30}, {#31, 
+          TooltipBox[
+           StyleBox[
+            StyleBox[
+            "\[FilledSmallSquare]", "SystemsModelMinimalElement"]], #32], #33, 
+          TooltipBox[
+           StyleBox[
+            StyleBox[
+            "\[FilledSmallSquare]", "SystemsModelMinimalElement"]], #34], #35, 
+          TooltipBox[
+           StyleBox[
+            StyleBox[
+            "\[FilledSmallSquare]", "SystemsModelMinimalElement"]], #36]}}, 
+        AllowedDimensions -> {6, 6}, 
+        GridBoxDividers -> {"Rows" -> {False, False, False, False, 
+            Directive[
+             GrayLevel[0], 
+             GrayLevel[0.6]], {False}, False}, 
+          "Columns" -> {False, False, False, False, 
+            Directive[
+             GrayLevel[0], 
+             GrayLevel[0.6]], {False}, False}}, DefaultBaseStyle -> 
+        "SystemsModelGrid00"], ")"}], #37, 
+     ButtonBox[
+      GraphicsBox[{
+        RectangleBox[{0, 0}, DefaultBaseStyle -> "SystemsModelSuperscript"], 
+        InsetBox[
+         StyleBox[
+         "\[ScriptCapitalS]", DefaultBaseStyle -> 
+          "SystemsModelSuperscript"], {0.5, 0.5}]}, ImageSize -> 20], 
+      ButtonFunction :> Control`Typesetting`SystemsModelTypesetToggle[
+        ButtonNotebook[], FE`CMObj], Evaluator -> Automatic, Appearance -> 
+      None], MultilineFunction -> None], 
+    EventHandlerTag[{"MouseEntered" :> {FE`CMObj = MathLink`CallFrontEnd[
+          FrontEnd`Value[
+           FEPrivate`Self[]]]}, PassEventsDown -> True, PassEventsUp -> 
+      True}]]& ),
+  InterpretationFunction->(RowBox[{"StateSpaceModel", "[", 
+     RowBox[{"{", 
+       RowBox[{"{", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{1, 4}, ","], "}"}], ",", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{7, 10}, ","], "}"}], ",", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{13, 16}, ","], "}"}], ",", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{19, 22}, ","], "}"}], "}"}], ",", 
+       RowBox[{"{", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{5, 6}, ","], "}"}], ",", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{11, 12}, ","], "}"}], ",", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{17, 18}, ","], "}"}], ",", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{23, 24}, ","], "}"}], "}"}], ",", 
+       RowBox[{"{", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{25, 28}, ","], "}"}], ",", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{31, 34}, ","], "}"}], "}"}], ",", 
+       RowBox[{"{", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{29, 30}, ","], "}"}], ",", 
+         RowBox[{"{", 
+           TemplateSlotSequence[{35, 36}, ","], "}"}], "}"}], "}"}], ",", 
+     "SamplingPeriod", "->", 
+     RowBox[{#37}], ",", "SystemsModelLabels", "->", "None", "]"}]& ),
+  Tooltip->StateSpaceModel]], "Output",
+ CellChangeTimes->{{3.807505767272277*^9, 3.8075057757951603`*^9}, {
+   3.807505825184037*^9, 3.807505832372447*^9}, 3.807506406145453*^9, {
+   3.807506445885208*^9, 3.80750644927958*^9}, {3.807507163159678*^9, 
+   3.8075072109940367`*^9}, {3.807950887184094*^9, 3.807950920489422*^9}, 
+   3.807951568485015*^9, {3.807958132317984*^9, 3.8079581400682793`*^9}, 
+   3.807958252631001*^9, {3.80795849645708*^9, 3.8079585052848186`*^9}, {
+   3.807959325623002*^9, 3.807959404660428*^9}, 3.8079594760300283`*^9, {
+   3.807960923363555*^9, 3.8079609515288982`*^9}, 3.8079614761660337`*^9},
+ CellLabel->
+  "Out[369]=",ExpressionUUID->"feac0793-c393-477e-a62b-234d782724da"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"{", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{
+      FractionBox[
+       RowBox[{
+        RowBox[{"2", " ", 
+         SuperscriptBox["g", "2"]}], "+", 
+        SuperscriptBox["s", "2"], "-", 
+        RowBox[{"2", " ", 
+         SuperscriptBox["\[Omega]s", "2"]}]}], 
+       RowBox[{
+        SuperscriptBox["g", "2"], "+", 
+        SuperscriptBox["s", "2"], "+", 
+        RowBox[{"s", " ", "\[Gamma]f"}], "-", 
+        SuperscriptBox["\[Omega]s", "2"]}]], ",", "0"}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{"0", ",", 
+      FractionBox[
+       RowBox[{
+        RowBox[{"2", " ", 
+         SuperscriptBox["g", "2"]}], "+", 
+        SuperscriptBox["s", "2"], "-", 
+        RowBox[{"2", " ", 
+         SuperscriptBox["\[Omega]s", "2"]}]}], 
+       RowBox[{
+        SuperscriptBox["g", "2"], "+", 
+        SuperscriptBox["s", "2"], "+", 
+        RowBox[{"s", " ", "\[Gamma]f"}], "-", 
+        SuperscriptBox["\[Omega]s", "2"]}]]}], "}"}]}], "}"}], "\[Equal]", 
+  RowBox[{"{", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"-", 
+       FractionBox[
+        RowBox[{
+         RowBox[{"-", 
+          SuperscriptBox["g", "2"]}], "+", 
+         SuperscriptBox["s", "2"], "+", 
+         RowBox[{"s", " ", "\[Gamma]f"}], "+", 
+         SuperscriptBox["\[Omega]s", "2"]}], 
+        RowBox[{
+         SuperscriptBox["g", "2"], "-", 
+         SuperscriptBox["s", "2"], "+", 
+         RowBox[{"s", " ", "\[Gamma]f"}], "-", 
+         SuperscriptBox["\[Omega]s", "2"]}]]}], ",", "0"}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{"0", ",", 
+      RowBox[{"-", 
+       FractionBox[
+        RowBox[{
+         RowBox[{"-", 
+          SuperscriptBox["g", "2"]}], "+", 
+         SuperscriptBox["s", "2"], "+", 
+         RowBox[{"s", " ", "\[Gamma]f"}], "+", 
+         SuperscriptBox["\[Omega]s", "2"]}], 
+        RowBox[{
+         SuperscriptBox["g", "2"], "-", 
+         SuperscriptBox["s", "2"], "+", 
+         RowBox[{"s", " ", "\[Gamma]f"}], "-", 
+         SuperscriptBox["\[Omega]s", "2"]}]]}]}], "}"}]}], "}"}]}]], "Output",\
+
+ CellChangeTimes->{{3.807505767272277*^9, 3.8075057757951603`*^9}, {
+   3.807505825184037*^9, 3.807505832372447*^9}, 3.807506406145453*^9, {
+   3.807506445885208*^9, 3.80750644927958*^9}, {3.807507163159678*^9, 
+   3.8075072109940367`*^9}, {3.807950887184094*^9, 3.807950920489422*^9}, 
+   3.807951568485015*^9, {3.807958132317984*^9, 3.8079581400682793`*^9}, 
+   3.807958252631001*^9, {3.80795849645708*^9, 3.8079585052848186`*^9}, {
+   3.807959325623002*^9, 3.807959404660428*^9}, 3.8079594760300283`*^9, {
+   3.807960923363555*^9, 3.8079609515288982`*^9}, 3.807961476219112*^9},
+ CellLabel->
+  "Out[370]=",ExpressionUUID->"c077cac4-2dcc-4662-bceb-be8c601d9ce2"]
+}, Open  ]]
+},
+WindowSize->{572, 755},
+WindowMargins->{{Automatic, 24}, {33, Automatic}},
+FrontEndVersion->"12.1 for Mac OS X x86 (64-bit) (June 19, 2020)",
+StyleDefinitions->"Default.nb",
+ExpressionUUID->"a8121c1c-a9b3-46ab-8da3-e9747500451c"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[558, 20, 1186, 28, 60, "Text",ExpressionUUID->"26cc6fca-960f-4605-8f60-e2c61fefcbb3"],
+Cell[CellGroupData[{
+Cell[1769, 52, 1500, 42, 126, "Input",ExpressionUUID->"4ec0cb59-5714-4f82-8784-f85df81b8897"],
+Cell[3272, 96, 3900, 88, 132, "Output",ExpressionUUID->"c0467542-e197-409b-a0e7-9ce64d4e485a"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[7209, 189, 9136, 206, 703, "Input",ExpressionUUID->"47282509-c802-45f4-9d43-5689ded363b7"],
+Cell[16348, 397, 6644, 165, 124, "Output",ExpressionUUID->"feac0793-c393-477e-a62b-234d782724da"],
+Cell[22995, 564, 2730, 74, 104, "Output",ExpressionUUID->"c077cac4-2dcc-4662-bceb-be8c601d9ce2"]
+}, Open  ]]
+}
+]
+*)
+
