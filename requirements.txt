@@ -1,11 +1,5 @@
 numpy
 scipy
 sympy>=1.5.1
-#ply==3.11
-#pyx==0.15
 pygraphviz
-#cython
-#qutip==4.4.1
-#qnet==1.4.3
-#six
 pytest
